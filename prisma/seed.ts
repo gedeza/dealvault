@@ -260,6 +260,109 @@ async function main() {
     },
   });
 
+  // Deal 4: Tanzanite — Tanzania deal
+  const deal4 = await prisma.deal.upsert({
+    where: { dealNumber: "DV-2026-0004" },
+    update: {},
+    create: {
+      dealNumber: "DV-2026-0004",
+      title: "Tanzanite Rough Stones - 200 carats",
+      commodity: "tanzanite",
+      quantity: 200,
+      unit: "carats",
+      value: 980000,
+      currency: "USD",
+      commissionPool: 0.025,
+      status: "documents_pending",
+      creatorId: seller.id,
+    },
+  });
+
+  // Add parties to Deal 4
+  await prisma.dealParty.upsert({
+    where: { dealId_userId: { dealId: deal4.id, userId: seller.id } },
+    update: {},
+    create: {
+      dealId: deal4.id,
+      userId: seller.id,
+      role: "seller",
+      side: "sell",
+      positionInChain: 0,
+      commissionPct: 0,
+      status: "accepted",
+      acceptedAt: new Date(),
+      companyId: sellerCompany.id,
+    },
+  });
+
+  await prisma.dealParty.upsert({
+    where: { dealId_userId: { dealId: deal4.id, userId: buyer.id } },
+    update: {},
+    create: {
+      dealId: deal4.id,
+      userId: buyer.id,
+      role: "buyer",
+      side: "buy",
+      positionInChain: 0,
+      commissionPct: 0,
+      status: "accepted",
+      acceptedAt: new Date(),
+    },
+  });
+
+  await prisma.dealParty.upsert({
+    where: { dealId_userId: { dealId: deal4.id, userId: intermediary.id } },
+    update: {},
+    create: {
+      dealId: deal4.id,
+      userId: intermediary.id,
+      role: "seller_intermediary",
+      side: "sell",
+      positionInChain: 1,
+      commissionPct: 0.005,
+      status: "accepted",
+      acceptedAt: new Date(),
+    },
+  });
+
+  // Timeline for Deal 4
+  await prisma.dealTimeline.createMany({
+    data: [
+      {
+        dealId: deal4.id,
+        userId: seller.id,
+        eventType: "deal_created",
+        description: 'Deal room "Tanzanite Rough Stones - 200 carats" (DV-2026-0004) created',
+        metadata: JSON.stringify({ commodity: "tanzanite", value: 980000, currency: "USD" }),
+      },
+      {
+        dealId: deal4.id,
+        userId: seller.id,
+        eventType: "status_changed",
+        description: 'Deal status changed from "draft" to "documents_pending"',
+        metadata: JSON.stringify({ from: "draft", to: "documents_pending" }),
+      },
+    ],
+  });
+
+  // Messages for Deal 4
+  await prisma.message.createMany({
+    data: [
+      {
+        dealId: deal4.id,
+        senderId: seller.id,
+        content: "Tanzanite stones are sourced from Merelani Hills, Arusha Region. Mining certificates and TRA documentation ready.",
+        visibility: "deal",
+      },
+      {
+        dealId: deal4.id,
+        senderId: buyer.id,
+        content: "Excellent. We need the gemological certification and export permit from Tanzania Mining Commission before we proceed.",
+        visibility: "deal",
+      },
+    ],
+  });
+
   // Commission ledger for Deal 1
   await prisma.commissionLedger.upsert({
     where: { id: "seed-commission-1" },
@@ -408,6 +511,7 @@ async function main() {
   console.log("  DV-2026-0001 — Gold Bullion (documents_pending)");
   console.log("  DV-2026-0002 — Rough Diamonds (draft)");
   console.log("  DV-2026-0003 — Platinum Sponge (under_review)");
+  console.log("  DV-2026-0004 — Tanzanite Rough Stones (documents_pending)");
 }
 
 main()
