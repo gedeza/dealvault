@@ -74,6 +74,24 @@
 
 ---
 
+## Phase 11: Branding, UX & Remaining Features
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 11.1 | Landing page (marketing) | DONE | Full marketing page with hero, features, pricing, how-it-works, CTA sections |
+| 11.2 | Emerald theme system-wide | DONE | CSS custom property `--primary` set to emerald; replaced all hardcoded emerald classes with tokens |
+| 11.3 | Custom logo & favicon integration | DONE | Logo in sidebar, header, auth pages, landing page; favicon generated from logo |
+| 11.4 | Branding brief for designers | DONE | `DOCS/BRANDING-BRIEF.md` — 13-section comprehensive guide |
+| 11.5 | Dashboard UI enhancement | DONE | Stat cards with colored icons, commodity themes, pipeline bars, activity timeline |
+| 11.6 | Mobile responsiveness | DONE | Fixed sidebar overlay, stacking headers, mobile card views, responsive sizing |
+| 11.7 | Real-time updates (WebSocket/SSE) | TODO | Live deal room updates without polling |
+| 11.8 | Deal settlement workflow | TODO | Full escrow fund release flow with multi-party approval |
+| 11.9 | Email notifications (transactional) | TODO | Invite, status change, document upload email triggers via Resend |
+| 11.10 | API documentation (OpenAPI/Swagger) | TODO | Complete `/api-docs` with full endpoint coverage |
+| 11.11 | PostgreSQL migration | TODO | Migrate production from SQLite to PostgreSQL |
+| 11.12 | Test coverage | TODO | Unit and integration tests for API routes and key workflows |
+
+---
+
 ## Summary
 
 | Phase | Total | Done | Remaining |
@@ -85,4 +103,5 @@
 | Phase 8 — Review & Fixes | 5 | 5 | 0 |
 | Phase 9 — Final Security & Scalability | 4 | 4 | 0 |
 | Phase 10 — Production & Polish | 10 | 10 | 0 |
-| **Total** | **65** | **64** | **1 (skipped)** |
+| Phase 11 — Branding, UX & Remaining | 12 | 6 | 6 |
+| **Total** | **77** | **70** | **7 (1 skipped, 6 TODO)** |
