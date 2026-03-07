@@ -201,8 +201,8 @@ Higher tiers get lower per-deal caps as a volume incentive.
 3. **Support burden** — Free users generate tickets without revenue.
 
 **Instead offer:**
-- **14-day free trial** of the Reef tier (hero tier), requiring company registration and phone verification
-- **Demo environment** with synthetic data for prospects to explore
+- **7-day free trial** of the Reef tier (hero tier), requiring company registration and phone verification. Serious commodity traders evaluate and decide fast — a shorter window creates urgency and limits security exposure from unverified accounts.
+- **Demo environment** with synthetic data for prospects to explore before signing up
 
 ---
 
