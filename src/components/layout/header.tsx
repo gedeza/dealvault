@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -39,24 +39,34 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
     .join("")
     .toUpperCase() || "U";
 
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const res = await fetch("/api/notifications");
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data.notifications);
-        setUnreadCount(data.unreadCount);
-      }
-    } catch {}
-  }, []);
-
   useEffect(() => {
-    if (session?.user) {
-      fetchNotifications();
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
+    if (!session?.user) return;
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/notifications");
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setNotifications(data.notifications);
+          setUnreadCount(data.unreadCount);
+        }
+      } catch {}
     }
-  }, [session, fetchNotifications]);
+
+    load();
+    const interval = setInterval(load, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [session]);
+
+  async function refreshAndUpdate() {
+    const res = await fetch("/api/notifications");
+    if (res.ok) {
+      const data = await res.json();
+      setNotifications(data.notifications);
+      setUnreadCount(data.unreadCount);
+    }
+  }
 
   async function markAsRead(id: string) {
     await fetch("/api/notifications", {
@@ -64,12 +74,12 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
-    fetchNotifications();
+    refreshAndUpdate();
   }
 
   async function markAllAsRead() {
     await fetch("/api/notifications?action=read-all", { method: "PATCH" });
-    fetchNotifications();
+    refreshAndUpdate();
   }
 
   return (

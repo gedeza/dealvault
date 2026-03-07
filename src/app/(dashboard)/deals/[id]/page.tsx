@@ -55,7 +55,6 @@ import {
   VALID_STATUS_TRANSITIONS,
   type DealStatus,
   type PartyRole,
-  type DocumentType,
 } from "@/types";
 
 interface DealFull {

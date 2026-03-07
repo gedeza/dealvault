@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, Plus, Pencil, Trash2, X, Check } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -76,16 +76,22 @@ export default function CompaniesPage() {
     setError("");
   }
 
+  useEffect(() => {
+    async function load() {
+      const res = await fetch("/api/companies");
+      const data = await res.json();
+      setCompanies(data);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
   async function fetchCompanies() {
     const res = await fetch("/api/companies");
     const data = await res.json();
     setCompanies(data);
     setLoading(false);
   }
-
-  useEffect(() => {
-    fetchCompanies();
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
