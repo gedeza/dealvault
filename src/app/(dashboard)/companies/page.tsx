@@ -155,15 +155,15 @@ export default function CompaniesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Companies</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold">Companies</h1>
+          <p className="text-sm text-muted-foreground">
             Manage your corporate entities for deal participation
           </p>
         </div>
         {!showForm && (
-          <Button onClick={() => setShowForm(true)} className="gap-2">
+          <Button onClick={() => setShowForm(true)} className="gap-2 w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             Add Company
           </Button>
@@ -267,60 +267,112 @@ export default function CompaniesPage() {
           </CardContent>
         </Card>
       ) : companies.length > 0 ? (
-        <div className="rounded-md border bg-background">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Registration #</TableHead>
-                <TableHead>Tax #</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {companies.map((company) => (
-                <TableRow key={company.id}>
-                  <TableCell className="font-medium">{company.name}</TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {company.registrationNumber || "-"}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {company.taxNumber || "-"}
-                  </TableCell>
-                  <TableCell>{company.country}</TableCell>
-                  <TableCell>
-                    <Badge variant={company.verified ? "default" : "secondary"}>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block rounded-md border bg-background">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Registration #</TableHead>
+                  <TableHead>Tax #</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {companies.map((company) => (
+                  <TableRow key={company.id}>
+                    <TableCell className="font-medium">{company.name}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {company.registrationNumber || "-"}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {company.taxNumber || "-"}
+                    </TableCell>
+                    <TableCell>{company.country}</TableCell>
+                    <TableCell>
+                      <Badge variant={company.verified ? "default" : "secondary"}>
+                        {company.verified ? (
+                          <span className="flex items-center gap-1"><Check className="h-3 w-3" /> Verified</span>
+                        ) : "Unverified"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => startEdit(company)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => setDeleteId(company.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile card view */}
+          <div className="md:hidden space-y-3">
+            {companies.map((company) => (
+              <Card key={company.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{company.name}</p>
+                      <p className="text-sm text-muted-foreground">{company.country}</p>
+                    </div>
+                    <Badge variant={company.verified ? "default" : "secondary"} className="shrink-0">
                       {company.verified ? (
                         <span className="flex items-center gap-1"><Check className="h-3 w-3" /> Verified</span>
                       ) : "Unverified"}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => startEdit(company)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-600 hover:text-red-700"
-                        onClick={() => setDeleteId(company.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  </div>
+                  {(company.registrationNumber || company.taxNumber) && (
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      {company.registrationNumber && (
+                        <span>Reg: <span className="font-mono">{company.registrationNumber}</span></span>
+                      )}
+                      {company.taxNumber && (
+                        <span>Tax: <span className="font-mono">{company.taxNumber}</span></span>
+                      )}
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                  )}
+                  <div className="flex gap-1 mt-3 border-t pt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => startEdit(company)}
+                    >
+                      <Pencil className="h-3 w-3" /> Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 text-red-600 hover:text-red-700"
+                      onClick={() => setDeleteId(company.id)}
+                    >
+                      <Trash2 className="h-3 w-3" /> Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
       ) : null}
 
       {/* Delete Confirmation Dialog */}

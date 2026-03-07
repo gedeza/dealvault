@@ -134,26 +134,26 @@ export default function ProfilePage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-3">
         <Card>
-          <CardContent className="pt-6 text-center">
-            <Handshake className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-            <p className="text-2xl font-bold">{profile._count.createdDeals}</p>
-            <p className="text-xs text-muted-foreground">Deals Created</p>
+          <CardContent className="p-4 sm:pt-6 text-center">
+            <Handshake className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1 text-muted-foreground" />
+            <p className="text-lg sm:text-2xl font-bold">{profile._count.createdDeals}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Deals Created</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6 text-center">
-            <User className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-            <p className="text-2xl font-bold">{profile._count.dealParties}</p>
-            <p className="text-xs text-muted-foreground">Deal Participations</p>
+          <CardContent className="p-4 sm:pt-6 text-center">
+            <User className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1 text-muted-foreground" />
+            <p className="text-lg sm:text-2xl font-bold">{profile._count.dealParties}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Participations</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6 text-center">
-            <Building2 className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-            <p className="text-2xl font-bold">{profile._count.companies}</p>
-            <p className="text-xs text-muted-foreground">Companies</p>
+          <CardContent className="p-4 sm:pt-6 text-center">
+            <Building2 className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1 text-muted-foreground" />
+            <p className="text-lg sm:text-2xl font-bold">{profile._count.companies}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Companies</p>
           </CardContent>
         </Card>
       </div>

@@ -23,6 +23,11 @@ export default function DashboardLayout({
     }
   }, [status, router]);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [children]);
+
   if (status === "loading") {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -38,23 +43,28 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-background">
+      {/* Desktop sidebar */}
       <Sidebar />
+
+      {/* Mobile sidebar overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          className="fixed inset-0 z-40 md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         >
+          <div className="absolute inset-0 bg-black/50 animate-in fade-in duration-200" />
           <div
-            className="w-64 h-full bg-background"
+            className="relative w-64 h-full animate-in slide-in-from-left duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <Sidebar />
+            <Sidebar mobile />
           </div>
         </div>
       )}
+
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>

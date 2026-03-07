@@ -96,15 +96,15 @@ export default function DealsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Deal Rooms</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold">Deal Rooms</h1>
+          <p className="text-sm text-muted-foreground">
             All your commodity deal rooms in one place
           </p>
         </div>
         <Link href="/deals/new">
-          <Button className="gap-2">
+          <Button className="gap-2 w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             New Deal Room
           </Button>
@@ -112,8 +112,8 @@ export default function DealsPage() {
       </div>
 
       {/* Search & Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
+      <div className="space-y-3 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+        <div className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
@@ -122,37 +122,39 @@ export default function DealsPage() {
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="All Statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            {DEAL_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {DEAL_STATUS_LABELS[s]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={commodityFilter || "all"} onValueChange={(v) => { setCommodityFilter(v === "all" ? "" : v); setPage(1); }}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="All Commodities" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Commodities</SelectItem>
-            {COMMODITIES.map((c) => (
-              <SelectItem key={c} value={c} className="capitalize">
-                {c.charAt(0).toUpperCase() + c.slice(1)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
-            <X className="h-3 w-3" /> Clear
-          </Button>
-        )}
+        <div className="flex gap-2">
+          <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}>
+            <SelectTrigger className="flex-1 sm:w-44">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {DEAL_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {DEAL_STATUS_LABELS[s]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={commodityFilter || "all"} onValueChange={(v) => { setCommodityFilter(v === "all" ? "" : v); setPage(1); }}>
+            <SelectTrigger className="flex-1 sm:w-40">
+              <SelectValue placeholder="All Commodities" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Commodities</SelectItem>
+              {COMMODITIES.map((c) => (
+                <SelectItem key={c} value={c} className="capitalize">
+                  {c.charAt(0).toUpperCase() + c.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {hasFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 shrink-0">
+              <X className="h-3 w-3" /> Clear
+            </Button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -259,13 +261,13 @@ export default function DealsPage() {
 
           {/* Pagination */}
           {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                 Showing {(pagination.page - 1) * pagination.limit + 1}-
                 {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
                 {pagination.total} deals
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"

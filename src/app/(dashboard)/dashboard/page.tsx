@@ -213,17 +213,17 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
             {getGreeting()}, {session?.user?.name?.split(" ")[0]}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Here&apos;s what&apos;s happening across your deal rooms today.
           </p>
         </div>
         <Link href="/deals/new">
-          <Button className="gap-2 shadow-sm">
+          <Button className="gap-2 shadow-sm w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             New Deal Room
           </Button>
@@ -231,7 +231,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {statCards.map((stat) => (
           <Card
             key={stat.label}
@@ -239,17 +239,17 @@ export default function DashboardPage() {
               stat.highlight ? "border-amber-300 dark:border-amber-700" : ""
             }`}
           >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold tracking-tight">{loading ? <Skeleton className="h-8 w-20" /> : stat.value}</p>
-                  <p className="text-xs text-muted-foreground">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">{stat.label}</p>
+                  <p className="text-lg sm:text-2xl font-bold tracking-tight">{loading ? <Skeleton className="h-7 w-16 sm:h-8 sm:w-20" /> : stat.value}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                     {loading ? <Skeleton className="h-3 w-16" /> : stat.description}
                   </p>
                 </div>
-                <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.iconBg}`}>
-                  <stat.icon className={`h-6 w-6 ${stat.iconColor}`} />
+                <div className={`flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl shrink-0 ${stat.iconBg}`}>
+                  <stat.icon className={`h-4 w-4 sm:h-6 sm:w-6 ${stat.iconColor}`} />
                 </div>
               </div>
             </CardContent>
@@ -314,7 +314,7 @@ export default function DashboardPage() {
 
       {/* Analytics */}
       {!loading && deals.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
           {/* Status Distribution */}
           <Card className="overflow-hidden">
             <CardHeader className="pb-4">
@@ -469,7 +469,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {deals.slice(0, 6).map((deal) => {
               const theme = COMMODITY_THEME[deal.commodity] || COMMODITY_THEME.gold;
               return (

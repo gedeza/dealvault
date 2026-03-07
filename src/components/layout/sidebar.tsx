@@ -24,13 +24,13 @@ const navItems = [
 
 const adminNavItem = { href: "/admin", label: "Admin", icon: ShieldCheck };
 
-export function Sidebar() {
+export function Sidebar({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "admin";
 
   return (
-    <aside className="hidden md:flex w-64 flex-col border-r bg-background">
+    <aside className={`${mobile ? "flex" : "hidden md:flex"} w-64 flex-col border-r bg-background`}>
       <div className="flex h-16 items-center gap-2 border-b px-6">
         <Image src="/logo.png" alt="DealVault" width={28} height={28} />
         <span className="text-lg font-bold">DealVault</span>
