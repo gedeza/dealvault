@@ -12,7 +12,36 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Handshake, FileText, DollarSign, Bell, TrendingUp, Clock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Plus,
+  Gem,
+  FileStack,
+  Wallet,
+  BellRing,
+  BarChart3,
+  PieChart,
+  ArrowUpRight,
+  Users,
+  MessageSquare,
+  FileText,
+  Clock,
+  CirclePlus,
+  ArrowRightLeft,
+  UserPlus,
+  Coins,
+  CheckCircle2,
+  Sparkles,
+  TrendingUp,
+  CircleDot,
+} from "lucide-react";
+import {
+  DEAL_STATUS_LABELS,
+  DEAL_STATUS_COLORS,
+  PARTY_ROLE_LABELS,
+  type DealStatus,
+  type PartyRole,
+} from "@/types";
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -28,15 +57,69 @@ function timeAgo(dateStr: string): string {
   if (days < 7) return `${days}d ago`;
   return new Date(dateStr).toLocaleDateString();
 }
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import {
-  DEAL_STATUS_LABELS,
-  DEAL_STATUS_COLORS,
-  PARTY_ROLE_LABELS,
-  type DealStatus,
-  type PartyRole,
-} from "@/types";
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+const COMMODITY_THEME: Record<string, { icon: string; gradient: string; accent: string; bg: string }> = {
+  gold: {
+    icon: "Au",
+    gradient: "from-amber-500/10 via-yellow-500/5 to-transparent",
+    accent: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-500/10",
+  },
+  diamonds: {
+    icon: "Ct",
+    gradient: "from-sky-500/10 via-cyan-500/5 to-transparent",
+    accent: "text-sky-600 dark:text-sky-400",
+    bg: "bg-sky-500/10",
+  },
+  platinum: {
+    icon: "Pt",
+    gradient: "from-slate-500/10 via-zinc-500/5 to-transparent",
+    accent: "text-slate-600 dark:text-slate-400",
+    bg: "bg-slate-500/10",
+  },
+  tanzanite: {
+    icon: "Tz",
+    gradient: "from-violet-500/10 via-purple-500/5 to-transparent",
+    accent: "text-violet-600 dark:text-violet-400",
+    bg: "bg-violet-500/10",
+  },
+};
+
+const STATUS_BAR_COLORS: Record<string, string> = {
+  draft: "bg-zinc-400",
+  documents_pending: "bg-amber-500",
+  under_review: "bg-blue-500",
+  verified: "bg-emerald-500",
+  in_progress: "bg-indigo-500",
+  settled: "bg-teal-500",
+  closed: "bg-slate-500",
+  cancelled: "bg-red-400",
+};
+
+function getEventIcon(eventType: string, description: string) {
+  if (description.includes("created"))
+    return <CirclePlus className="h-4 w-4 text-emerald-500" />;
+  if (description.includes("status changed"))
+    return <ArrowRightLeft className="h-4 w-4 text-blue-500" />;
+  if (description.includes("invited"))
+    return <UserPlus className="h-4 w-4 text-violet-500" />;
+  if (description.includes("accepted"))
+    return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+  if (description.includes("Commission") || description.includes("commission"))
+    return <Coins className="h-4 w-4 text-amber-500" />;
+  if (description.includes("document") || description.includes("uploaded"))
+    return <FileText className="h-4 w-4 text-sky-500" />;
+  if (description.includes("message"))
+    return <MessageSquare className="h-4 w-4 text-indigo-500" />;
+  return <CircleDot className="h-4 w-4 text-muted-foreground" />;
+}
 
 interface Deal {
   id: string;
@@ -89,101 +172,134 @@ export default function DashboardPage() {
     )
   );
 
+  const totalValue = deals.reduce((sum, d) => sum + d.value, 0);
+
+  const statCards = [
+    {
+      label: "Total Deals",
+      value: deals.length,
+      icon: Gem,
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+      description: `${deals.filter(d => d.status === "closed" || d.status === "settled").length} completed`,
+    },
+    {
+      label: "Active Deals",
+      value: activeDeals.length,
+      icon: FileStack,
+      iconBg: "bg-blue-500/10",
+      iconColor: "text-blue-600 dark:text-blue-400",
+      description: "In progress",
+    },
+    {
+      label: "Portfolio Value",
+      value: `$${totalValue.toLocaleString()}`,
+      icon: Wallet,
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-600 dark:text-amber-400",
+      description: `${deals.length > 0 ? `~$${Math.round(totalValue / deals.length).toLocaleString()} avg` : "No deals yet"}`,
+    },
+    {
+      label: "Pending Invites",
+      value: pendingInvites.length,
+      icon: BellRing,
+      iconBg: pendingInvites.length > 0 ? "bg-amber-500/10" : "bg-muted",
+      iconColor: pendingInvites.length > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground",
+      description: pendingInvites.length > 0 ? "Action required" : "All clear",
+      highlight: pendingInvites.length > 0,
+    },
+  ];
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">
-            Welcome back, {session?.user?.name?.split(" ")[0]}
+      {/* Welcome Section */}
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {getGreeting()}, {session?.user?.name?.split(" ")[0]}
           </h1>
           <p className="text-muted-foreground">
-            Manage your commodity deal rooms
+            Here&apos;s what&apos;s happening across your deal rooms today.
           </p>
         </div>
         <Link href="/deals/new">
-          <Button className="gap-2">
+          <Button className="gap-2 shadow-sm">
             <Plus className="h-4 w-4" />
             New Deal Room
           </Button>
         </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Deals</CardTitle>
-            <Handshake className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{deals.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Deals</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeDeals.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              $
-              {deals
-                .reduce((sum, d) => sum + d.value, 0)
-                .toLocaleString()}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className={pendingInvites.length > 0 ? "border-amber-200 bg-amber-50 dark:bg-amber-950/20" : ""}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pending Invites</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingInvites.length}</div>
-          </CardContent>
-        </Card>
+      {/* Stat Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((stat) => (
+          <Card
+            key={stat.label}
+            className={`relative overflow-hidden transition-all hover:shadow-md ${
+              stat.highlight ? "border-amber-300 dark:border-amber-700" : ""
+            }`}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                  <p className="text-2xl font-bold tracking-tight">{loading ? <Skeleton className="h-8 w-20" /> : stat.value}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {loading ? <Skeleton className="h-3 w-16" /> : stat.description}
+                  </p>
+                </div>
+                <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.iconBg}`}>
+                  <stat.icon className={`h-6 w-6 ${stat.iconColor}`} />
+                </div>
+              </div>
+            </CardContent>
+            {stat.highlight && (
+              <div className="absolute top-0 right-0 h-1 w-full bg-gradient-to-r from-amber-400 to-orange-400" />
+            )}
+          </Card>
+        ))}
       </div>
 
       {/* Pending Invitations */}
       {pendingInvites.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Bell className="h-5 w-5 text-amber-500" /> Pending Invitations
-          </h2>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+              <BellRing className="h-4 w-4 text-amber-600" />
+            </div>
+            <h2 className="text-lg font-semibold">Pending Invitations</h2>
+            <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+              {pendingInvites.length}
+            </Badge>
+          </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {pendingInvites.map((deal) => {
               const myParty = deal.parties.find(
                 (p) => p.user.id === session?.user?.id && p.status === "invited"
               );
+              const theme = COMMODITY_THEME[deal.commodity] || COMMODITY_THEME.gold;
               return (
                 <Link key={deal.id} href={`/deals/${deal.id}`}>
-                  <Card className="border-amber-200 hover:border-amber-300 transition-colors cursor-pointer">
+                  <Card className="border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700 transition-all hover:shadow-md cursor-pointer">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <CardDescription>{deal.dealNumber}</CardDescription>
-                        <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                           Invitation
                         </Badge>
                       </div>
                       <CardTitle className="text-base">{deal.title}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span className="capitalize">{deal.commodity}</span>
-                        <span>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className={`font-medium capitalize ${theme.accent}`}>{deal.commodity}</span>
+                        <span className="font-semibold">
                           {deal.currency} {deal.value.toLocaleString()}
                         </span>
                       </div>
                       {myParty && (
-                        <p className="text-xs text-amber-700 mt-2">
+                        <p className="text-xs text-amber-700 dark:text-amber-400 mt-2 flex items-center gap-1">
+                          <UserPlus className="h-3 w-3" />
                           Invited as {PARTY_ROLE_LABELS[myParty.role]}
                         </p>
                       )}
@@ -200,14 +316,20 @@ export default function DashboardPage() {
       {!loading && deals.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2">
           {/* Status Distribution */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" /> Deal Status Distribution
-              </CardTitle>
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                  <BarChart3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Deal Pipeline</CardTitle>
+                  <CardDescription className="text-xs">Status distribution across all deals</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {Object.entries(
                   deals.reduce<Record<string, number>>((acc, d) => {
                     acc[d.status] = (acc[d.status] || 0) + 1;
@@ -216,18 +338,21 @@ export default function DashboardPage() {
                 )
                   .sort(([, a], [, b]) => b - a)
                   .map(([status, count]) => (
-                    <div key={status} className="flex items-center gap-3">
-                      <div className="flex-1">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>{DEAL_STATUS_LABELS[status as DealStatus] || status}</span>
-                          <span className="text-muted-foreground">{count}</span>
+                    <div key={status} className="space-y-1.5">
+                      <div className="flex justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className={`h-2.5 w-2.5 rounded-full ${STATUS_BAR_COLORS[status] || "bg-muted"}`} />
+                          <span className="font-medium">{DEAL_STATUS_LABELS[status as DealStatus] || status}</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div
-                            className="bg-primary h-2 rounded-full transition-all"
-                            style={{ width: `${(count / deals.length) * 100}%` }}
-                          />
-                        </div>
+                        <span className="text-muted-foreground tabular-nums">
+                          {count} <span className="text-xs">({Math.round((count / deals.length) * 100)}%)</span>
+                        </span>
+                      </div>
+                      <div className="w-full bg-muted/50 rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${STATUS_BAR_COLORS[status] || "bg-primary"}`}
+                          style={{ width: `${(count / deals.length) * 100}%` }}
+                        />
                       </div>
                     </div>
                   ))}
@@ -236,14 +361,20 @@ export default function DashboardPage() {
           </Card>
 
           {/* Commodity Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <DollarSign className="h-4 w-4" /> Value by Commodity
-              </CardTitle>
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+                  <PieChart className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Portfolio Breakdown</CardTitle>
+                  <CardDescription className="text-xs">Value distribution by commodity</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {Object.entries(
                   deals.reduce<Record<string, { count: number; value: number }>>((acc, d) => {
                     if (!acc[d.commodity]) acc[d.commodity] = { count: 0, value: 0 };
@@ -253,25 +384,57 @@ export default function DashboardPage() {
                   }, {})
                 )
                   .sort(([, a], [, b]) => b.value - a.value)
-                  .map(([commodity, { count, value }]) => (
-                    <div key={commodity} className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium capitalize">{commodity}</p>
-                        <p className="text-xs text-muted-foreground">{count} deals</p>
+                  .map(([commodity, { count, value }]) => {
+                    const theme = COMMODITY_THEME[commodity] || COMMODITY_THEME.gold;
+                    const pct = totalValue > 0 ? Math.round((value / totalValue) * 100) : 0;
+                    return (
+                      <div key={commodity} className="flex items-center gap-3">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${theme.bg} shrink-0`}>
+                          <span className={`text-sm font-bold ${theme.accent}`}>{theme.icon}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-sm font-medium capitalize">{commodity}</p>
+                            <p className="text-sm font-bold tabular-nums">${value.toLocaleString()}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-muted/50 rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${theme.bg.replace("/10", "/60")}`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-muted-foreground tabular-nums w-14 text-right">
+                              {count} deal{count !== 1 ? "s" : ""} / {pct}%
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm font-semibold">${value.toLocaleString()}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      <Separator />
-
+      {/* Recent Deal Rooms */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">Recent Deal Rooms</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Sparkles className="h-4 w-4 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold">Recent Deal Rooms</h2>
+          </div>
+          {deals.length > 6 && (
+            <Link href="/deals">
+              <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground hover:text-primary">
+                View all <ArrowUpRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          )}
+        </div>
         {loading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
@@ -288,11 +451,14 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : deals.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Handshake className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
-                No deal rooms yet. Create your first one to get started.
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
+                <Gem className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="font-semibold mb-1">No deal rooms yet</h3>
+              <p className="text-muted-foreground mb-6 text-center max-w-sm">
+                Create your first deal room to start managing commodity transactions with full audit trails.
               </p>
               <Link href="/deals/new">
                 <Button className="gap-2">
@@ -304,37 +470,57 @@ export default function DashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {deals.slice(0, 6).map((deal) => (
-              <Link key={deal.id} href={`/deals/${deal.id}`}>
-                <Card className="hover:border-primary/30 transition-colors cursor-pointer">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardDescription>{deal.dealNumber}</CardDescription>
-                      <Badge
-                        variant="secondary"
-                        className={DEAL_STATUS_COLORS[deal.status]}
-                      >
-                        {DEAL_STATUS_LABELS[deal.status]}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-base">{deal.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span className="capitalize">{deal.commodity}</span>
-                      <span>
-                        {deal.currency} {deal.value.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                      <span>{deal.parties.length} parties</span>
-                      <span>{deal._count.documents} docs</span>
-                      <span>{deal._count.messages} messages</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+            {deals.slice(0, 6).map((deal) => {
+              const theme = COMMODITY_THEME[deal.commodity] || COMMODITY_THEME.gold;
+              return (
+                <Link key={deal.id} href={`/deals/${deal.id}`}>
+                  <Card className={`group relative overflow-hidden transition-all hover:shadow-md hover:border-primary/30 cursor-pointer`}>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${theme.gradient} pointer-events-none`} />
+                    <CardHeader className="pb-2 relative">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`flex h-6 w-6 items-center justify-center rounded ${theme.bg}`}>
+                            <span className={`text-[10px] font-bold ${theme.accent}`}>{theme.icon}</span>
+                          </div>
+                          <CardDescription className="font-mono text-xs">{deal.dealNumber}</CardDescription>
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className={DEAL_STATUS_COLORS[deal.status]}
+                        >
+                          {DEAL_STATUS_LABELS[deal.status]}
+                        </Badge>
+                      </div>
+                      <CardTitle className="text-base group-hover:text-primary transition-colors mt-1">
+                        {deal.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="relative">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className={`font-medium capitalize ${theme.accent}`}>{deal.commodity}</span>
+                        <span className="font-semibold tabular-nums">
+                          {deal.currency} {deal.value.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Users className="h-3 w-3" /> {deal.parties.length}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FileText className="h-3 w-3" /> {deal._count.documents}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" /> {deal._count.messages}
+                        </span>
+                        <span className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity text-primary">
+                          Open <ArrowUpRight className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
@@ -342,31 +528,81 @@ export default function DashboardPage() {
       {/* Activity Feed */}
       {activity.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Clock className="h-5 w-5 text-muted-foreground" /> Recent Activity
-          </h2>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10">
+              <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <h2 className="text-lg font-semibold">Recent Activity</h2>
+          </div>
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-4">
-                {activity.slice(0, 10).map((event) => (
-                  <div key={event.id} className="flex gap-3 border-b pb-3 last:border-0">
-                    <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate">{event.description}</p>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <Link href={`/deals/${event.deal.id}`} className="text-primary hover:underline">
-                          {event.deal.dealNumber}
-                        </Link>
-                        <span>by {event.user.name}</span>
-                        <span title={new Date(event.createdAt).toLocaleString()}>{timeAgo(event.createdAt)}</span>
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
+                <div className="space-y-1">
+                  {activity.slice(0, 10).map((event, index) => (
+                    <div
+                      key={event.id}
+                      className={`flex gap-4 p-3 rounded-lg transition-colors hover:bg-muted/50 relative ${
+                        index === 0 ? "bg-muted/30" : ""
+                      }`}
+                    >
+                      <div className="flex-shrink-0 relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-background border shadow-sm">
+                        {getEventIcon(event.eventType, event.description)}
                       </div>
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <p className="text-sm leading-snug">{event.description}</p>
+                        <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
+                          <Link
+                            href={`/deals/${event.deal.id}`}
+                            className="font-mono text-primary hover:underline"
+                          >
+                            {event.deal.dealNumber}
+                          </Link>
+                          <span className="text-border">|</span>
+                          <span>{event.user.name}</span>
+                          <span className="text-border">|</span>
+                          <span title={new Date(event.createdAt).toLocaleString()}>
+                            {timeAgo(event.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                      {index === 0 && (
+                        <Badge variant="secondary" className="self-start text-[10px] bg-primary/10 text-primary shrink-0">
+                          Latest
+                        </Badge>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Quick Actions (when no deals) */}
+      {!loading && deals.length > 0 && deals.length < 5 && (
+        <Card className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <TrendingUp className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm">Grow your portfolio</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  You have {deals.length} deal{deals.length !== 1 ? "s" : ""} in your portfolio. Create more deal rooms to track all your commodity transactions in one place.
+                </p>
+              </div>
+              <Link href="/deals/new">
+                <Button variant="outline" size="sm" className="gap-1 shrink-0 border-primary/30 text-primary hover:bg-primary/5">
+                  <Plus className="h-3.5 w-3.5" /> New Deal
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
