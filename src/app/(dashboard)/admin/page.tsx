@@ -408,90 +408,103 @@ export default function AdminPage() {
                   No users found.
                 </p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>2FA</TableHead>
-                      <TableHead>Verified</TableHead>
-                      <TableHead>Deals</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">
-                          {user.name}
-                        </TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              user.role === "admin" ? "default" : "secondary"
-                            }
-                            className={
-                              user.role === "admin"
-                                ? "bg-emerald-100 text-emerald-800"
-                                : ""
-                            }
-                          >
-                            {user.role}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="secondary"
-                            className={
-                              user.twoFactorEnabled
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-600"
-                            }
-                          >
-                            {user.twoFactorEnabled ? "Enabled" : "Disabled"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {user.emailVerified ? (
-                            <span className="text-green-600 text-sm">Yes</span>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">
-                              No
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">
-                            {user._count.createdDeals + user._count.dealParties}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={
-                              user.id === session?.user?.id ||
-                              updatingRole === user.id
-                            }
-                            onClick={() => handleRoleToggle(user)}
-                          >
-                            {updatingRole === user.id
-                              ? "..."
-                              : user.role === "admin"
-                                ? "Revoke Admin"
-                                : "Make Admin"}
-                          </Button>
-                        </TableCell>
+                <>
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>2FA</TableHead>
+                        <TableHead>Deals</TableHead>
+                        <TableHead>Joined</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {users.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">
+                            {user.name}
+                          </TableCell>
+                          <TableCell className="text-sm">{user.email}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={user.role === "admin" ? "default" : "secondary"}
+                              className={user.role === "admin" ? "bg-emerald-100 text-emerald-800" : ""}
+                            >
+                              {user.role}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="secondary"
+                              className={
+                                user.twoFactorEnabled
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-600"
+                              }
+                            >
+                              {user.twoFactorEnabled ? "On" : "Off"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {user._count.createdDeals + user._count.dealParties}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={user.id === session?.user?.id || updatingRole === user.id}
+                              onClick={() => handleRoleToggle(user)}
+                            >
+                              {updatingRole === user.id ? "..." : user.role === "admin" ? "Revoke Admin" : "Make Admin"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                  {users.map((user) => (
+                    <div key={user.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
+                        <Badge
+                          variant={user.role === "admin" ? "default" : "secondary"}
+                          className={user.role === "admin" ? "bg-emerald-100 text-emerald-800" : ""}
+                        >
+                          {user.role}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <span>2FA: {user.twoFactorEnabled ? "On" : "Off"}</span>
+                        <span>Deals: {user._count.createdDeals + user._count.dealParties}</span>
+                        <span>Joined: {new Date(user.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        disabled={user.id === session?.user?.id || updatingRole === user.id}
+                        onClick={() => handleRoleToggle(user)}
+                      >
+                        {updatingRole === user.id ? "..." : user.role === "admin" ? "Revoke Admin" : "Make Admin"}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                </>
               )}
             </CardContent>
           </Card>

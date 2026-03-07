@@ -26,7 +26,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, Plus, Pencil, Trash2, Check } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Building2, Plus, Pencil, Trash2, Check, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -47,6 +55,8 @@ export default function CompaniesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -127,9 +137,10 @@ export default function CompaniesPage() {
     setSaving(false);
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this company?")) return;
-    const res = await fetch(`/api/companies/${id}`, { method: "DELETE" });
+  async function handleDelete() {
+    if (!deleteId) return;
+    setDeleting(true);
+    const res = await fetch(`/api/companies/${deleteId}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Company deleted");
       fetchCompanies();
@@ -138,6 +149,8 @@ export default function CompaniesPage() {
       setError(data.error);
       toast.error(data.error || "Failed to delete company");
     }
+    setDeleteId(null);
+    setDeleting(false);
   }
 
   return (
@@ -296,7 +309,7 @@ export default function CompaniesPage() {
                         variant="ghost"
                         size="icon"
                         className="text-red-600 hover:text-red-700"
-                        onClick={() => handleDelete(company.id)}
+                        onClick={() => setDeleteId(company.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -308,6 +321,33 @@ export default function CompaniesPage() {
           </Table>
         </div>
       ) : null}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Company
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-medium text-foreground">
+                {companies.find((c) => c.id === deleteId)?.name}
+              </span>
+              ? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

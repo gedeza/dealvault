@@ -209,23 +209,23 @@ export default function DealRoomPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview" className="gap-1">
+        <TabsList className="flex w-full overflow-x-auto">
+          <TabsTrigger value="overview" className="gap-1 flex-shrink-0">
             <Shield className="h-3 w-3 hidden sm:inline" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="documents" className="gap-1">
+          <TabsTrigger value="documents" className="gap-1 flex-shrink-0">
             <FileUp className="h-3 w-3 hidden sm:inline" /> Docs
           </TabsTrigger>
-          <TabsTrigger value="parties" className="gap-1">
+          <TabsTrigger value="parties" className="gap-1 flex-shrink-0">
             <Users className="h-3 w-3 hidden sm:inline" /> Parties
           </TabsTrigger>
-          <TabsTrigger value="commission" className="gap-1">
+          <TabsTrigger value="commission" className="gap-1 flex-shrink-0">
             <DollarSign className="h-3 w-3 hidden sm:inline" /> Commission
           </TabsTrigger>
-          <TabsTrigger value="messages" className="gap-1">
+          <TabsTrigger value="messages" className="gap-1 flex-shrink-0">
             <MessageSquare className="h-3 w-3 hidden sm:inline" /> Messages
           </TabsTrigger>
-          <TabsTrigger value="timeline" className="gap-1">
+          <TabsTrigger value="timeline" className="gap-1 flex-shrink-0">
             <Clock className="h-3 w-3 hidden sm:inline" /> Timeline
           </TabsTrigger>
         </TabsList>

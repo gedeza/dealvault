@@ -13,6 +13,21 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Handshake, FileText, DollarSign, Bell, TrendingUp, Clock } from "lucide-react";
+
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const seconds = Math.floor((now - then) / 1000);
+
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -343,7 +358,7 @@ export default function DashboardPage() {
                           {event.deal.dealNumber}
                         </Link>
                         <span>by {event.user.name}</span>
-                        <span>{new Date(event.createdAt).toLocaleString()}</span>
+                        <span title={new Date(event.createdAt).toLocaleString()}>{timeAgo(event.createdAt)}</span>
                       </div>
                     </div>
                   </div>
