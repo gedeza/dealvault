@@ -13,8 +13,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, User, Shield, Menu, Sun, Moon, Bell, Check, FileText, Users, MessageSquare, DollarSign, RefreshCw } from "lucide-react";
+import { LogOut, User, Menu, Sun, Moon, Bell, Check, FileText, Users, MessageSquare, DollarSign, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Notification {
   id: string;
@@ -115,7 +116,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
           <span className="sr-only">Toggle menu</span>
         </Button>
         <div className="md:hidden flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
+          <Image src="/logo.png" alt="DealVault" width={24} height={24} />
           <span className="font-bold">DealVault</span>
         </div>
       </div>

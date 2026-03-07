@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 function getPasswordStrength(password: string): { score: number; label: string; color: string } {
   let score = 0;
@@ -73,7 +74,7 @@ function ResetPasswordForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-2">
-          <Shield className="h-8 w-8 text-primary" />
+          <Image src="/logo.png" alt="DealVault" width={40} height={40} />
         </div>
         <CardTitle>Reset Password</CardTitle>
         <CardDescription>Enter your new password</CardDescription>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Shield,
@@ -25,7 +26,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-emerald-600" />
+            <Image src="/logo.png" alt="DealVault" width={28} height={28} />
             <span className="text-xl font-bold">DealVault</span>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm">
@@ -49,7 +50,7 @@ export default function HomePage() {
         <section className="container mx-auto px-4 py-20 md:py-28">
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">
-              <Shield className="h-3.5 w-3.5" />
+              <Image src="/logo.png" alt="" width={16} height={16} />
               Trusted by commodity traders across Southern Africa
             </div>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
@@ -455,7 +456,7 @@ export default function HomePage() {
           <div className="container mx-auto px-4 py-10">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-emerald-600" />
+                <Image src="/logo.png" alt="DealVault" width={24} height={24} />
                 <span className="font-bold">DealVault</span>
                 <span className="text-xs text-muted-foreground ml-2">Secure Commodity Deal Rooms</span>
               </div>

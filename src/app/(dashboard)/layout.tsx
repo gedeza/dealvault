@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { Shield } from "lucide-react";
+import Image from "next/image";
 
 export default function DashboardLayout({
   children,
@@ -27,7 +27,7 @@ export default function DashboardLayout({
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Shield className="h-10 w-10 text-primary animate-pulse" />
+          <Image src="/logo.png" alt="DealVault" width={48} height={48} className="animate-pulse" />
           <p className="text-sm text-muted-foreground">Loading DealVault...</p>
         </div>
       </div>

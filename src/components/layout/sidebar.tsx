@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,6 @@ import {
   Handshake,
   Building2,
   User,
-  Shield,
   ShieldCheck,
   Plus,
 } from "lucide-react";
@@ -32,7 +32,7 @@ export function Sidebar() {
   return (
     <aside className="hidden md:flex w-64 flex-col border-r bg-background">
       <div className="flex h-16 items-center gap-2 border-b px-6">
-        <Shield className="h-6 w-6 text-primary" />
+        <Image src="/logo.png" alt="DealVault" width={28} height={28} />
         <span className="text-lg font-bold">DealVault</span>
       </div>
       <nav className="flex-1 space-y-1 p-4">
