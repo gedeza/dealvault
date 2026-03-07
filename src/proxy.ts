@@ -41,7 +41,7 @@ function cleanup() {
   }
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   cleanup();
 
   const { pathname } = req.nextUrl;
