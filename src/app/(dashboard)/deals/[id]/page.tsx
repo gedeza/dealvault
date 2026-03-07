@@ -1175,6 +1175,7 @@ function MessageSender({
 }) {
   const [sending, setSending] = useState(false);
   const [content, setContent] = useState("");
+  const [visibility, setVisibility] = useState<"deal" | "side" | "private">("deal");
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -1184,7 +1185,7 @@ function MessageSender({
     await fetch(`/api/deals/${dealId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, visibility }),
     });
 
     setContent("");
@@ -1193,17 +1194,42 @@ function MessageSender({
   }
 
   return (
-    <form onSubmit={handleSend} className="flex gap-2">
-      <Textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Type a message..."
-        rows={2}
-        className="flex-1"
-      />
-      <Button type="submit" disabled={sending} size="icon" className="h-auto">
-        <Send className="h-4 w-4" />
-      </Button>
+    <form onSubmit={handleSend} className="space-y-2">
+      <div className="flex gap-2">
+        <Textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Type a message..."
+          rows={2}
+          className="flex-1"
+        />
+        <Button type="submit" disabled={sending} size="icon" className="h-auto">
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">Visibility:</span>
+        <div className="flex gap-1">
+          {(["deal", "side", "private"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setVisibility(v)}
+              className={`px-2 py-0.5 text-xs rounded-full border transition-colors ${
+                visibility === v
+                  ? v === "deal"
+                    ? "bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900 dark:border-blue-700 dark:text-blue-300"
+                    : v === "side"
+                    ? "bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900 dark:border-amber-700 dark:text-amber-300"
+                    : "bg-red-100 border-red-300 text-red-700 dark:bg-red-900 dark:border-red-700 dark:text-red-300"
+                  : "bg-muted border-border text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {v === "deal" ? "All Parties" : v === "side" ? "My Side Only" : "Private"}
+            </button>
+          ))}
+        </div>
+      </div>
     </form>
   );
 }

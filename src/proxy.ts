@@ -53,11 +53,17 @@ export function proxy(req: NextRequest) {
 
   const ip = getClientIp(req);
 
-  // Stricter limits for auth endpoints
-  const isAuth = pathname.startsWith("/api/auth/");
-  const bucket = isAuth ? "auth" : "api";
-  const maxRequests = isAuth ? 10 : 60;
-  const windowMs = isAuth ? 15 * 60 * 1000 : 60 * 1000;
+  // NextAuth session checks happen frequently — don't rate limit them
+  const isSessionCheck = pathname === "/api/auth/session" || pathname.startsWith("/api/auth/callback");
+  if (isSessionCheck) {
+    return NextResponse.next();
+  }
+
+  // Stricter limits for auth mutation endpoints (login, register, reset)
+  const isAuthMutation = pathname.startsWith("/api/auth/") && req.method === "POST";
+  const bucket = isAuthMutation ? "auth" : "api";
+  const maxRequests = isAuthMutation ? 10 : 200;
+  const windowMs = isAuthMutation ? 15 * 60 * 1000 : 60 * 1000;
 
   // Even stricter for uploads
   const isUpload = pathname === "/api/documents" && req.method === "POST";
