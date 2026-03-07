@@ -1,36 +1,140 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DealVault
+
+A secure, full-stack deal room platform for managing multi-party commodity transactions. Built for brokers, mandates, and intermediaries who need structured workflows, document verification, and commission tracking across complex deal chains.
+
+## What It Does
+
+DealVault provides private deal rooms where multiple parties collaborate on commodity transactions (gold, diamonds, platinum, and more). Each deal moves through a defined lifecycle — from draft to settlement — with full audit trails, document management, and commission ledger tracking at every stage.
+
+### Key Capabilities
+
+- **Deal Rooms** — Create and manage deals with automatic deal numbering, status state machine enforcement, and multi-party collaboration across buy and sell sides
+- **Party Management** — Invite sellers, buyers, mandates, and intermediaries with role-based positioning in the deal chain; accept/reject invitations with company assignment
+- **Document Vault** — Upload and verify deal documents (SPA, NCNDA, IMFPA, BCL, POF) with file type validation, magic byte verification, SHA-256 hashing, and visibility controls
+- **Commission Ledger** — Track commission splits across the deal chain with pool validation ensuring allocations never exceed the agreed percentage
+- **Messaging** — In-deal messaging with three visibility levels: deal-wide, side-only (buy/sell), and private
+- **Timeline & Audit** — Every action logged with full audit trail; export as CSV or JSON for compliance
+- **Notifications** — In-app notification system with real-time badge updates and email alerts via Resend
+- **Two-Factor Auth** — TOTP-based 2FA with QR code setup and replay attack prevention
+- **Admin Dashboard** — Platform-wide statistics, user management, and role administration
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) |
+| Frontend | React 19, TypeScript, TailwindCSS v4 |
+| UI Components | shadcn/ui, Radix UI, Lucide Icons |
+| Database | Prisma ORM (SQLite dev / PostgreSQL production) |
+| Auth | NextAuth v4 (credentials + JWT + TOTP 2FA) |
+| Validation | Zod v4 |
+| Email | Resend API |
+| Testing | Vitest (unit) + Playwright (E2E) |
+| CI/CD | GitHub Actions |
+| Deployment | Docker (multi-stage build) |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- npm
+
+### Setup
 
 ```bash
+# Install dependencies
+npm install
+
+# Copy environment config
+cp .env.example .env
+
+# Run database migrations
+npx prisma migrate dev
+
+# Seed sample data (admin user, deals, companies)
+npm run db:seed
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to access the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Default Seed Credentials
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+After seeding, log in with:
+- **Admin:** admin@dealvault.com / password123
+- **User:** user@dealvault.com / password123
 
-## Learn More
+### Running Tests
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Unit tests
+npm test
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# E2E tests (requires dev server)
+npm run test:e2e
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Docker
 
-## Deploy on Vercel
+```bash
+# Development (with PostgreSQL)
+docker compose up
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Production
+docker compose -f docker-compose.prod.yml up -d
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deal Lifecycle
+
+```
+draft -> documents_pending -> under_review -> verified -> in_progress -> settled -> closed
+  \            \                  \              \            \
+   \            \                  \              \            +-> cancelled
+    \            \                  \              +-> cancelled
+     \            \                  +-> cancelled
+      \            +-> cancelled
+       +-> cancelled
+```
+
+Transitions are enforced server-side via a status state machine. Only valid transitions are permitted.
+
+## Security
+
+- Rate limiting with per-IP buckets (auth, API, upload)
+- Input sanitization (HTML stripping, XSS prevention)
+- File upload validation (extension whitelist, MIME type, magic bytes)
+- Security headers (X-Content-Type-Options, X-Frame-Options, CSP)
+- TOTP replay attack prevention
+- Role-based access control (user/admin)
+- Environment validation with production enforcement
+
+## Project Structure
+
+```
+src/
+  app/
+    (auth)/          Login, register, password reset
+    (dashboard)/     Dashboard, deals, companies, profile, admin
+    api/             REST API routes (24 endpoints)
+    api-docs/        Interactive API documentation
+  components/
+    layout/          Header, sidebar
+    providers/       Session, theme providers
+    ui/              shadcn/ui components
+  lib/               Auth, DB, storage, validation, logging
+  services/          Timeline, notifications, email
+  types/             TypeScript types, constants, enums
+prisma/              Schema, migrations, seed
+e2e/                 Playwright E2E tests
+```
+
+## License
+
+Private — All rights reserved.
+
+---
+
+Built by [Nhlanhla Mnyandu](mailto:nhlanhla@isutech.co.za) at ISU Tech.
