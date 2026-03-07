@@ -119,8 +119,12 @@ No existing solution addresses all of:
 4. Message visibility controls (deal-wide, side-only, private)
 5. Deal status state machine with audit trail
 6. Pricing accessible to individual brokers and small firms
+7. **Escrow-based workflow with role-gated phase transitions**
+8. **Chain of custody tracking between testing and delivery**
+9. **Dual-party checkpoint confirmation with geotagged evidence**
+10. **Automated serial number and weight variance detection**
 
-DealVault is positioned to fill this gap as a **vertical SaaS** purpose-built for commodity deal intermediaries.
+DealVault is positioned to fill this gap as a **vertical SaaS** purpose-built for commodity deal intermediaries — evolving from a deal tracker into a **trust infrastructure platform**.
 
 ---
 
@@ -235,8 +239,112 @@ Based on this research, the following product strategy is recommended:
 
 ---
 
-## 9. Sources and References
+## 9. Escrow Workflow & Chain of Custody Research
 
+### 9.1 The Escrow Gap
+
+User feedback from commodity traders revealed that DealVault's original linear deal flow (draft -> settled -> closed) does not reflect the actual trading process. Real commodity deals follow a 6-phase escrow-based workflow:
+
+1. **Product Listing** - Seller lists commodity with specifications
+2. **Documentation** - Seller uploads paperwork, certifications, test requirements
+3. **Buyer Review** - Buyer verifies document authenticity
+4. **Physical Testing** - Commodity tested at secure location (e.g., refinery)
+5. **Fund Blocking** - Once verified, buyer's funds are held in escrow
+6. **Fund Release** - After confirmed delivery, funds released to seller
+
+Each phase acts as a gate - progression requires specific role-based approvals and evidence.
+
+### 9.2 The Chain of Custody Vulnerability
+
+**The single biggest fraud vector in commodity trading:** After gold is tested at a refinery and verified as authentic, there is no guarantee the same gold is delivered to the buyer.
+
+```
+Gold tested at refinery [PASS] -> [UNTRACKED GAP] -> Gold delivered to buyer [???]
+                                    Swap happens here
+```
+
+This is not theoretical - tungsten-filled gold bars have fooled experts worldwide. The gap between testing and delivery is where swap fraud occurs.
+
+### 9.3 Industry Solutions Researched
+
+| Organization | Approach |
+|---|---|
+| **LBMA** | "Chain of Integrity" - gold stays in recognized vaults. Trust broken the moment a bar leaves controlled environment; re-assay required. Gold Bar Integrity (GBI) initiative adds digital twin database (launched 2020). |
+| **De Beers (Tracr)** | Digital twin per diamond on blockchain. Unique surface characteristics scanned at every handoff. 3M+ diamonds registered, $3.4B+ combined value. |
+| **COMEX** | Licensed depositories only (Brinks, HSBC, JP Morgan). Gold moves only via approved carriers. Dual control at every transfer. |
+| **Rand Refinery** | Full chain of custody from deposit to finished product, independently audited. KYC/KYP on all counterparties. Only LBMA-certified refinery in Africa. |
+| **Tradewind Markets** | VaultChain on R3 Corda blockchain. Physical storage at Royal Canadian Mint (sovereign entity for higher trust). |
+| **BullionVault** | Vault operators (Brinks, Loomis) accept legal responsibility. Insurance via Lloyd's of London. Bars never leave recognized vault network. |
+
+**Universal principle:** Trust is maintained by never letting the commodity leave a controlled environment without documented handoff.
+
+### 9.4 Physical Security Measures (Industry Standard)
+
+- **Bar identification:** Refiner hallmark, weight, purity, unique serial number (laser-engraved)
+- **Tamper-evident packaging:** "Certicards" that show visible damage if opened
+- **Seal integrity:** Verified at every custody handover; compromised seal invalidates chain and can void insurance
+- **Weight verification:** Recorded at multiple points; discrepancies trigger investigation
+- **Specific gravity testing:** Weighing in air and water detects tungsten-filled counterfeits
+- **Secure transport:** Approved carriers only (Brinks, Loomis, Malca-Amit, G4S)
+
+### 9.5 South African Regulatory Context
+
+**Precious Metals Act (Act 37 of 2005):**
+- Precious Metals Beneficiation License from SADPMR required to trade/process/deal in gold
+- Export permit required from SADPMR for international sales
+- Every licence holder must keep a "true and correct register in the prescribed form" of precious metal movements
+- Assay certificate from accredited institution (SA Bureau of Standards) required for export
+
+**Regulatory bodies:** SADPMR, SARB, SARS
+
+**Key insight:** A digital chain of custody feature in DealVault directly satisfies the regulatory requirement for a "true and correct register."
+
+### 9.6 Insurance Requirements
+
+- Lloyd's of London is the standard insurer for bullion in vault and transit
+- A compromised seal or undocumented handover can void insurance claims
+- Air carriers may limit liability under the Montreal Convention (~USD 40/kg vs gold value of ~USD 80,000+/kg)
+- Documentation at every handover point is essential for pursuing claims beyond convention limits
+- Insurance certificates must extend from transit into storage without coverage gaps
+
+### 9.7 Escrow Fund Management Findings
+
+For MVP, the recommended approach is **ledger-based tracking without payment integration**:
+
+- Platform acts as a deal coordination and audit layer, not a payment processor
+- Buyer provides proof of fund blocking (bank SWIFT reference, attorney trust account reference)
+- Platform records escrow state and attaches proof documents
+- Actual fund movement happens off-platform (attorney trust account or bank escrow)
+- This avoids financial regulation, reduces liability, and matches how high-value commodity trades already work
+
+### 9.8 Digital Trust Amplifiers (No Hardware Required)
+
+Research identified four smartphone-based trust mechanisms buildable in a web app:
+
+1. **Serial number tracking** - Assay serial matched against delivery serial; automatic mismatch detection
+2. **Timestamped geotagged photos** - EXIF data cross-referenced with claimed location
+3. **Dual-party confirmation** - Both seller-side AND buyer-side must independently confirm each custody handoff
+4. **Weight verification** - Auto-flags discrepancies between sequential checkpoints (>0.01% variance)
+
+Combined with SHA-256 photo hashing (already used for documents), these create a tamper-evident digital evidence chain that makes fraud detectable and attributable.
+
+### 9.9 Key Finding: DealVault's Differentiator
+
+No existing platform combines:
+- Multi-party deal room management
+- Commission ledger enforcement
+- 6-phase escrow workflow with role-based gates
+- Chain of custody tracking between testing and delivery
+- Dual-party checkpoint confirmation
+- Tamper-evident audit trail with SHA-256 integrity hashing
+
+This positions DealVault as a **trust infrastructure platform** for commodity trading, not just a deal tracker.
+
+---
+
+## 10. Sources and References
+
+### Market Research
 - World Gold Council — Gold Demand Trends (2025)
 - Kimberley Process Statistics — Rough Diamond Trade (2025)
 - Johnson Matthey — Platinum Group Metals Market Report (2025)
@@ -245,6 +353,23 @@ Based on this research, the following product strategy is recommended:
 - South African Reserve Bank — Cross-border Transaction Guidelines
 - Tanzania Mining Commission — Export Regulations
 - Botswana Ministry of Minerals — Diamond Trading Hub Reports
+
+### Chain of Custody & Escrow Research
+- LBMA Gold Bar Integrity Initiative — https://www.lbma.org.uk/good-delivery/lbma-gold-bar-integrity-initiative-security-feature
+- LBMA Responsible Gold Guidance v9
+- De Beers Tracr Platform — https://www.tracr.com/
+- Tradewind Markets VaultChain — Blockchain Gold Provenance
+- COMEX Gold Warrants FAQ — CME Group
+- Rand Refinery Chain of Custody — https://www.randrefinery.com/
+- SA Precious Metals Act (Act 37 of 2005) — Government Gazette 30942
+- SADPMR Regulations — https://www.sadpmr.co.za/
+- CEMAD Gold Transaction Guidelines (SARB)
+- CustodyChain App — Polygon/Ethereum custody tracking
+- Gen10 Traceability — Commodity supply chain apps
+- AlpVision — Anti-counterfeiting for precious metals
+- BullionVault — Chain of Integrity documentation
+- Lloyd's of London — Bullion insurance standards
+- Montreal Convention — Carrier liability limitations
 
 ---
 

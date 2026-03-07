@@ -29,6 +29,21 @@ model User {
   passwordResets  PasswordReset[]
   notifications   Notification[]
   usedTotpCodes   UsedTotpCode[]
+
+  // Workflow relations
+  phaseApprovalDecisions PhaseApproval[]    @relation("PhaseApprovalDecider")
+
+  // Escrow relations
+  escrowBlockConfirmed    EscrowRecord[]    @relation("EscrowBlockConfirmer")
+  escrowDeliveryConfirmed EscrowRecord[]    @relation("EscrowDeliveryConfirmer")
+  escrowReleased          EscrowRecord[]    @relation("EscrowReleaser")
+  escrowRefunded          EscrowRecord[]    @relation("EscrowRefunder")
+
+  // Custody relations
+  custodySealed            CustodyLog[]              @relation("CustodySealedBy")
+  custodyReleased          CustodyLog[]              @relation("CustodyReleasedTo")
+  checkpointsSubmitted     CustodyCheckpoint[]       @relation("CheckpointSubmitter")
+  checkpointsConfirmed     CustodyConfirmation[]     @relation("CheckpointConfirmer")
 }
 
 model PasswordReset {
@@ -96,16 +111,21 @@ model Deal {
   creatorId       String
   creator         User     @relation("DealCreator", fields: [creatorId], references: [id])
 
+  // Workflow phase (null = legacy deal, set = escrow workflow active)
+  workflowPhase   String?
+
   @@index([creatorId])
   @@index([status])
   @@index([commodity])
   @@index([createdAt])
 
-  parties         DealParty[]
-  documents       Document[]
-  timeline        DealTimeline[]
-  messages        Message[]
+  parties          DealParty[]
+  documents        Document[]
+  timeline         DealTimeline[]
+  messages         Message[]
   commissionLedger CommissionLedger[]
+  workflow         DealWorkflow?
+  custodyLog       CustodyLog?
 }
 
 model DealParty {
@@ -150,6 +170,8 @@ model Document {
   deal         Deal     @relation(fields: [dealId], references: [id])
   uploaderId   String
   uploader     User     @relation(fields: [uploaderId], references: [id])
+
+  verificationRecord VerificationRecord? @relation("VerificationAssayDoc")
 
   @@index([dealId])
 }
@@ -210,4 +232,199 @@ model UsedTotpCode {
   @@unique([userId, code])
   @@index([userId])
   @@index([usedAt])
+}
+
+// ============================================================================
+// Escrow Workflow Models
+// ============================================================================
+
+model DealWorkflow {
+  id             String    @id @default(cuid())
+  phase          String    @default("listing")
+  phaseStartedAt DateTime  @default(now())
+  phaseDeadline  DateTime?
+  completedAt    DateTime?
+  cancelledAt    DateTime?
+  cancelReason   String?
+  disputedAt     DateTime?
+  disputeReason  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  dealId         String    @unique
+  deal           Deal      @relation(fields: [dealId], references: [id])
+
+  phaseApprovals     PhaseApproval[]
+  verificationRecord VerificationRecord?
+  escrow             EscrowRecord?
+
+  @@index([dealId])
+  @@index([phase])
+}
+
+model PhaseApproval {
+  id           String    @id @default(cuid())
+  phase        String
+  action       String    @default("pending")
+  requiredRole String
+  status       String    @default("pending")
+  notes        String?
+  decidedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  workflowId   String
+  workflow     DealWorkflow @relation(fields: [workflowId], references: [id])
+  decidedById  String?
+  decidedBy    User?     @relation("PhaseApprovalDecider", fields: [decidedById], references: [id])
+
+  @@index([workflowId, phase])
+  @@index([workflowId, status])
+}
+
+model VerificationRecord {
+  id               String    @id @default(cuid())
+  location         String?
+  scheduledAt      DateTime?
+  completedAt      DateTime?
+  inspectorName    String?
+  inspectorCompany String?
+  result           String?
+  findings         String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  workflowId       String    @unique
+  workflow         DealWorkflow @relation(fields: [workflowId], references: [id])
+
+  assayDocumentId  String?   @unique
+  assayDocument    Document? @relation("VerificationAssayDoc", fields: [assayDocumentId], references: [id])
+
+  @@index([workflowId])
+}
+
+model EscrowRecord {
+  id                    String    @id @default(cuid())
+  currency              String
+  amount                Float
+  status                String    @default("pending")
+  referenceNumber       String?
+  notes                 String?
+
+  blockedAt             DateTime?
+  blockConfirmedAt      DateTime?
+  blockConfirmedById    String?
+  blockConfirmedBy      User?     @relation("EscrowBlockConfirmer", fields: [blockConfirmedById], references: [id])
+
+  deliveryConfirmedAt   DateTime?
+  deliveryConfirmedById String?
+  deliveryConfirmedBy   User?     @relation("EscrowDeliveryConfirmer", fields: [deliveryConfirmedById], references: [id])
+
+  releasedAt            DateTime?
+  releasedById          String?
+  releasedBy            User?     @relation("EscrowReleaser", fields: [releasedById], references: [id])
+
+  refundedAt            DateTime?
+  refundedById          String?
+  refundedBy            User?     @relation("EscrowRefunder", fields: [refundedById], references: [id])
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  workflowId            String    @unique
+  workflow              DealWorkflow @relation(fields: [workflowId], references: [id])
+
+  @@index([workflowId])
+  @@index([status])
+}
+
+// ============================================================================
+// Chain of Custody Models
+// ============================================================================
+
+model CustodyLog {
+  id             String    @id @default(cuid())
+  sealId         String
+  status         String    @default("initiated")
+
+  sealedAt       DateTime?
+  sealedByUserId String?
+  sealedByUser   User?     @relation("CustodySealedBy", fields: [sealedByUserId], references: [id])
+  sealPhotoPath  String?
+  sealPhotoHash  String?
+
+  custodianName    String?
+  custodianType    String?
+  custodianContact String?
+
+  releasedAt       DateTime?
+  releasedToUserId String?
+  releasedToUser   User?     @relation("CustodyReleasedTo", fields: [releasedToUserId], references: [id])
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  dealId         String    @unique
+  deal           Deal      @relation(fields: [dealId], references: [id])
+
+  checkpoints    CustodyCheckpoint[]
+
+  @@index([dealId])
+  @@index([sealId])
+}
+
+model CustodyCheckpoint {
+  id              String    @id @default(cuid())
+  sequence        Int
+  checkpointType  String
+  label           String
+
+  latitude        Float?
+  longitude       Float?
+  locationName    String?
+
+  notes           String?
+  sealIntact      Boolean?
+  weight          Float?
+  weightUnit      String?
+
+  photoPath       String?
+  photoHash       String?
+  videoPath       String?
+  videoHash       String?
+
+  submittedByUserId String?
+  submittedByUser   User?    @relation("CheckpointSubmitter", fields: [submittedByUserId], references: [id])
+  submittedAt       DateTime?
+
+  isMandatory     Boolean   @default(true)
+  isComplete      Boolean   @default(false)
+  completedAt     DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  custodyLogId    String
+  custodyLog      CustodyLog @relation(fields: [custodyLogId], references: [id])
+
+  confirmations   CustodyConfirmation[]
+
+  @@index([custodyLogId])
+  @@index([custodyLogId, sequence])
+}
+
+model CustodyConfirmation {
+  id                String   @id @default(cuid())
+  partyRole         String
+  side              String
+  status            String
+  disputeReason     String?
+  confirmedAt       DateTime @default(now())
+
+  checkpointId      String
+  checkpoint        CustodyCheckpoint @relation(fields: [checkpointId], references: [id])
+  confirmedByUserId String
+  confirmedByUser   User     @relation("CheckpointConfirmer", fields: [confirmedByUserId], references: [id])
+
+  @@unique([checkpointId, confirmedByUserId])
+  @@index([checkpointId])
 }

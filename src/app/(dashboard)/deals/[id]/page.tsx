@@ -44,6 +44,8 @@ import {
   Send,
   Eye,
   X,
+  Link2,
+  FlaskConical,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -56,6 +58,18 @@ import {
   type DealStatus,
   type PartyRole,
 } from "@/types";
+import {
+  PARTY_ROLE_TO_WORKFLOW_ROLE,
+  PHASE_GATE_LABELS,
+  type WorkflowPhase,
+  type WorkflowRole,
+} from "@/types/workflow";
+import { WorkflowStepper } from "@/components/workflow/WorkflowStepper";
+import { PhaseActionPanel } from "@/components/workflow/PhaseActionPanel";
+import { EscrowStatusCard } from "@/components/workflow/EscrowStatusCard";
+import { VerificationPanel } from "@/components/workflow/VerificationPanel";
+import { CustodyTracker } from "@/components/custody/CustodyTracker";
+import { InitiateCustodyModal } from "@/components/custody/InitiateCustodyModal";
 
 interface DealFull {
   id: string;
@@ -68,6 +82,7 @@ interface DealFull {
   currency: string;
   commissionPool: number;
   status: DealStatus;
+  workflowPhase: string | null;
   createdAt: string;
   creator: { id: string; name: string; email: string };
   parties: {
@@ -125,6 +140,14 @@ export default function DealRoomPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Workflow & Custody state
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const [workflow, setWorkflow] = useState<any>(null);
+  const [custody, setCustody] = useState<any>(null);
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+  const [userWorkflowRole, setUserWorkflowRole] = useState<WorkflowRole | null>(null);
+  const [missingGates, setMissingGates] = useState<string[]>([]);
+
   const fetchDeal = useCallback(async () => {
     try {
       const res = await fetch(`/api/deals/${params.id}`);
@@ -137,9 +160,48 @@ export default function DealRoomPage() {
     }
   }, [params.id]);
 
+  const fetchWorkflow = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/deals/${params.id}/workflow`);
+      if (res.ok) {
+        const data = await res.json();
+        setWorkflow(data);
+      }
+    } catch { /* no workflow */ }
+  }, [params.id]);
+
+  const fetchCustody = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/deals/${params.id}/custody`);
+      if (res.ok) {
+        const data = await res.json();
+        setCustody(data);
+      }
+    } catch { /* no custody */ }
+  }, [params.id]);
+
+  const refreshAll = useCallback(() => {
+    fetchDeal();
+    fetchWorkflow();
+    fetchCustody();
+  }, [fetchDeal, fetchWorkflow, fetchCustody]);
+
   useEffect(() => {
     fetchDeal();
-  }, [fetchDeal]);
+    fetchWorkflow();
+    fetchCustody();
+  }, [fetchDeal, fetchWorkflow, fetchCustody]);
+
+  // Derive user's workflow role from deal parties
+  useEffect(() => {
+    if (!deal || !session?.user?.id) return;
+    const party = deal.parties.find((p) => p.user.id === session.user.id);
+    if (party) {
+      setUserWorkflowRole(PARTY_ROLE_TO_WORKFLOW_ROLE[party.role] || null);
+    } else if (deal.creator.id === session.user.id) {
+      setUserWorkflowRole("seller");
+    }
+  }, [deal, session?.user?.id]);
 
   // Poll for updates on messages and timeline tabs (every 10s)
   useEffect(() => {
@@ -198,14 +260,28 @@ export default function DealRoomPage() {
             {deal.value.toLocaleString()}
           </p>
         </div>
-        {isCreator && (
-          <StatusUpdater
-            dealId={deal.id}
-            currentStatus={deal.status}
-            onUpdate={fetchDeal}
-          />
-        )}
+        <div className="flex items-center gap-2">
+          {isCreator && !deal.workflowPhase && (
+            <EnableWorkflowButton dealId={deal.id} onEnable={refreshAll} />
+          )}
+          {isCreator && (
+            <StatusUpdater
+              dealId={deal.id}
+              currentStatus={deal.status}
+              onUpdate={fetchDeal}
+            />
+          )}
+        </div>
       </div>
+
+      {/* Workflow Stepper (shown when workflow is active) */}
+      {deal.workflowPhase && workflow && (
+        <Card>
+          <CardContent className="pt-6 pb-4">
+            <WorkflowStepper currentPhase={workflow.phase as WorkflowPhase} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -213,6 +289,16 @@ export default function DealRoomPage() {
           <TabsTrigger value="overview" className="gap-1 flex-shrink-0">
             <Shield className="h-3 w-3 hidden sm:inline" /> Overview
           </TabsTrigger>
+          {deal.workflowPhase && (
+            <TabsTrigger value="workflow" className="gap-1 flex-shrink-0">
+              <FlaskConical className="h-3 w-3 hidden sm:inline" /> Workflow
+            </TabsTrigger>
+          )}
+          {deal.workflowPhase && (
+            <TabsTrigger value="custody" className="gap-1 flex-shrink-0">
+              <Link2 className="h-3 w-3 hidden sm:inline" /> Custody
+            </TabsTrigger>
+          )}
           <TabsTrigger value="documents" className="gap-1 flex-shrink-0">
             <FileUp className="h-3 w-3 hidden sm:inline" /> Docs
           </TabsTrigger>
@@ -343,6 +429,93 @@ export default function DealRoomPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Workflow Tab */}
+        {deal.workflowPhase && workflow && (
+          <TabsContent value="workflow" className="space-y-4">
+            <PhaseActionPanel
+              dealId={deal.id}
+              currentPhase={workflow.phase as WorkflowPhase}
+              userRole={userWorkflowRole}
+              pendingApprovals={workflow.phaseApprovals || []}
+              missingGates={missingGates}
+              onAction={refreshAll}
+            />
+            <VerificationPanel
+              dealId={deal.id}
+              verification={workflow.verificationRecord || null}
+              userRole={userWorkflowRole}
+              onUpdate={refreshAll}
+            />
+            <EscrowStatusCard
+              dealId={deal.id}
+              escrow={workflow.escrow || null}
+              userRole={userWorkflowRole}
+              onAction={refreshAll}
+            />
+            {/* Phase Approvals History */}
+            {workflow.phaseApprovals && workflow.phaseApprovals.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Phase Approvals</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {workflow.phaseApprovals.map((a: { id: string; phase: string; requiredRole: string; status: string; notes: string | null; decidedAt: string | null; decidedBy: { name: string } | null }) => (
+                      <div key={a.id} className="flex items-center justify-between text-sm border-b pb-2 last:border-0">
+                        <div>
+                          <span className="font-medium capitalize">{a.phase.replace("_", " ")}</span>
+                          <span className="text-muted-foreground"> — {a.requiredRole}</span>
+                          {a.notes && <p className="text-xs text-muted-foreground">{a.notes}</p>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {a.decidedBy && (
+                            <span className="text-xs text-muted-foreground">{a.decidedBy.name}</span>
+                          )}
+                          <Badge
+                            variant={a.status === "approved" ? "default" : a.status === "rejected" ? "destructive" : "secondary"}
+                          >
+                            {a.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        )}
+
+        {/* Custody Tab */}
+        {deal.workflowPhase && (
+          <TabsContent value="custody" className="space-y-4">
+            {!custody ? (
+              <Card>
+                <CardContent className="py-8 text-center space-y-3">
+                  <Link2 className="h-8 w-8 text-muted-foreground mx-auto" />
+                  <p className="text-muted-foreground">
+                    Chain of custody has not been initiated for this deal.
+                  </p>
+                  {(userWorkflowRole === "seller" || userWorkflowRole === "broker" || userWorkflowRole === "intermediary" || isCreator) && (
+                    <InitiateCustodyModal
+                      dealId={deal.id}
+                      onCreated={refreshAll}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <CustodyTracker
+                dealId={deal.id}
+                custody={custody}
+                userRole={userWorkflowRole}
+                currentUserId={currentUserId || ""}
+                onUpdate={refreshAll}
+              />
+            )}
+          </TabsContent>
+        )}
 
         {/* Documents Tab */}
         <TabsContent value="documents" className="space-y-4">
@@ -622,6 +795,44 @@ export default function DealRoomPage() {
 }
 
 // --- Sub-components ---
+
+function EnableWorkflowButton({
+  dealId,
+  onEnable,
+}: {
+  dealId: string;
+  onEnable: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const enable = async () => {
+    if (!confirm("Enable escrow workflow for this deal? This adds phase tracking, escrow management, and chain of custody.")) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/deals/${dealId}/workflow`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        toast.success("Escrow workflow enabled");
+        onEnable();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to enable workflow");
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button size="sm" variant="outline" onClick={enable} disabled={loading}>
+      <FlaskConical className="h-4 w-4 mr-1" />
+      {loading ? "Enabling..." : "Enable Escrow Workflow"}
+    </Button>
+  );
+}
 
 function StatusUpdater({
   dealId,

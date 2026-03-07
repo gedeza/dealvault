@@ -139,6 +139,28 @@ export const EVENT_TYPES = [
   "message_sent",
   "commission_agreed",
   "deal_settled",
+  // Workflow events
+  "workflow_created",
+  "phase_advanced",
+  "phase_rolled_back",
+  "phase_approval_submitted",
+  "verification_recorded",
+  // Escrow events
+  "escrow_blocked",
+  "escrow_block_confirmed",
+  "escrow_released",
+  "escrow_refunded",
+  // Dispute events
+  "dispute_raised",
+  "dispute_resolved",
+  // Custody events
+  "custody_initiated",
+  "checkpoint_submitted",
+  "checkpoint_confirmed",
+  "checkpoint_disputed",
+  "custody_complete",
+  "weight_variance_detected",
+  "serial_mismatch_detected",
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

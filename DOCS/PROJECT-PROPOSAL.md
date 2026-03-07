@@ -91,19 +91,40 @@ Break-even: ~6 Professional subscribers cover minimum hosting costs.
 | **Mobile Responsive** | Card-based views for tables, touch-friendly interactions | Complete |
 | **API Documentation** | Interactive OpenAPI spec viewer at /api-docs | Complete |
 
-### 3.2 Future Features (Post-MVP)
+### 3.2 Escrow Workflow & Chain of Custody (In Development)
+
+Based on user feedback from commodity traders, DealVault is being enhanced with a comprehensive escrow-based trading workflow.
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **6-Phase Escrow Workflow** | Listing -> Documentation -> Buyer Review -> Testing -> Fund Blocking -> Fund Release, with role-based gates | In Development |
+| **Role-Based Phase Permissions** | Seller, Buyer, Broker, and Intermediary each have specific actions per phase | In Development |
+| **Per-Phase Approvals** | Explicit approve/reject at each gate with reason and timestamp | In Development |
+| **Verification & Testing Records** | Physical testing details: location, inspector, result, assay document | In Development |
+| **Chain of Custody Tracking** | 5-checkpoint evidence trail between testing and delivery, preventing commodity swaps | In Development |
+| **Dual-Party Checkpoint Confirmation** | Both seller-side and buyer-side must independently confirm each custody handoff | In Development |
+| **Escrow Fund Ledger** | Track fund blocking, confirmation, delivery, and release (ledger-based, no payment integration) | In Development |
+| **Serial & Weight Verification** | Auto-detect mismatches between assay and delivery serial numbers; weight variance alerts | In Development |
+| **Geotagged Photo Evidence** | Smartphone GPS + timestamped photos at each custody checkpoint | In Development |
+| **Dispute Resolution Workflow** | Raise disputes at any phase from testing onward; intermediary resolves | In Development |
+
+### 3.3 Future Features (Post-Escrow)
 
 | Feature | Priority | Description |
 |---------|----------|-------------|
 | Real-time updates | High | WebSocket/SSE for live deal room updates |
-| Deal settlement workflow | High | Guided settlement process with checklists |
-| Email notifications (expanded) | High | Daily digest, deal activity summaries |
-| PostgreSQL migration | High | Production database with connection pooling |
+| Email notifications (expanded) | High | Phase transition notifications, deadline reminders |
+| Phase timeout enforcement | High | Cron-based deadline checking with auto-actions |
+| PDF generation | High | Deal summaries, release instructions, audit exports |
+| Commodity templates | Medium | Preset document requirements per commodity type (gold, diamonds, etc.) |
+| KYC document collection | Medium | User/company verification before deal participation |
 | Document e-signatures | Medium | Integrated signing for SPA, NCNDA, IMFPA |
 | Multi-language support | Medium | Afrikaans, French (DRC/West Africa), Arabic (UAE) |
 | Mobile app (PWA) | Medium | Installable progressive web app |
+| Payment integration | Low | Attorney trust account API, bank escrow API |
 | Blockchain audit trail | Low | Immutable transaction log on-chain |
-| AI document analysis | Low | Auto-classify uploaded documents, flag anomalies |
+| IoT integration | Low | NFC tags, GPS trackers for physical custody |
+| AI document analysis | Low | Auto-classify documents, verify assay certificates via OCR |
 | White-label option | Low | Custom branding for enterprise clients |
 
 ---
@@ -150,7 +171,14 @@ Deal ──┬── DealParty ──── Company (optional)
        ├── Document
        ├── Message
        ├── DealTimeline
-       └── CommissionLedger
+       ├── CommissionLedger
+       ├── DealWorkflow (1:1, optional — escrow deals)
+       │    ├── PhaseApproval (1:many)
+       │    ├── VerificationRecord (1:1)
+       │    └── EscrowRecord (1:1)
+       └── CustodyLog (1:1, optional — chain of custody)
+            └── CustodyCheckpoint (1:many, ordered)
+                 └── CustodyConfirmation (1:many, dual-party)
 ```
 
 ### 4.3 Security Architecture
@@ -172,42 +200,39 @@ Deal ──┬── DealParty ──── Company (optional)
 
 ### 4.4 Deal Status State Machine
 
+**Legacy Flow (non-escrow deals):**
+
 ```
-          ┌──────────────────────────────────────────────────────────┐
-          │                                                          │
-          ▼                                                          │
-       ┌───────┐    ┌────────────────┐    ┌──────────────┐    ┌──────────┐
-       │ Draft │───▶│ Documents      │───▶│ Under Review │───▶│ Verified │
-       └───┬───┘    │ Pending        │    └──────┬───────┘    └────┬─────┘
-           │        └───────┬────────┘           │                 │
-           │                │                    │                 │
-           │                │                    │                 ▼
-           │                │                    │          ┌─────────────┐
-           │                │                    │          │ In Progress │
-           │                │                    │          └──────┬──────┘
-           │                │                    │                 │
-           │                │                    │                 ▼
-           │                │                    │          ┌─────────────┐
-           │                │                    │          │  Settled    │
-           │                │                    │          └──────┬──────┘
-           │                │                    │                 │
-           │                │                    │                 ▼
-           │                │                    │          ┌─────────────┐
-           │                │                    │          │   Closed    │
-           │                │                    │          └─────────────┘
-           │                │                    │
-           ▼                ▼                    ▼
-       ┌─────────────────────────────────────────────┐
-       │                 Cancelled                    │
-       └─────────────────────────────────────────────┘
+Draft -> Documents Pending -> Under Review -> Verified -> In Progress -> Settled -> Closed
+                                                                          |
+                                      Any status ─────────────────> Cancelled -> Draft
+```
+
+**Escrow Workflow (commodity deals with chain of custody):**
+
+```
+Listing ──[all parties accepted]────────> Documentation
+Documentation ──[docs uploaded]─────────> Buyer Review
+Buyer Review ──[buyer approves]─────────> Testing
+Testing ──[verification passed]─────────> Fund Blocking
+  └── Chain of Custody INITIATED (commodity sealed at test site)
+Fund Blocking ──[escrow confirmed]──────> Fund Release
+  └── Custody checkpoints tracked (vault, logistics, delivery)
+Fund Release ──[delivery + custody OK]──> Completed
+  └── ALL custody checkpoints must be confirmed by both sides
+
+Any phase (testing+) ──────────────────> Disputed (intermediary resolves)
+Any phase (pre-fund) ──────────────────> Cancelled -> Listing (restart)
 ```
 
 **Transition Rules:**
-- Only the deal creator can change status
-- Transitions are validated server-side against the state machine
-- Each transition is logged in the timeline with timestamp and user
-- All deal parties are notified on status change
-- Settlement requires all parties to have accepted their invitations
+- Legacy: Only deal creator can change status
+- Escrow: Role-based — specific roles trigger specific transitions
+- All transitions validated server-side against state machine + gates
+- Each transition logged in timeline with timestamp, user, and evidence
+- All deal parties notified on status change
+- Settlement requires all parties accepted + custody complete + escrow confirmed
+- Fund release blocked until ALL custody checkpoints verified by both sides
 
 ### 4.5 Infrastructure
 
@@ -263,7 +288,7 @@ Party opens deal → Documents tab
   → Any party can download or preview (images/PDFs inline)
 ```
 
-### 5.4 Deal Progression Flow
+### 5.4 Deal Progression Flow (Legacy)
 
 ```
 Creator reviews deal completeness
@@ -276,6 +301,51 @@ Creator reviews deal completeness
   → System validates: all parties accepted, commission entries exist
   → Status: In Progress → Settled
   → Final close: Settled → Closed
+```
+
+### 5.5 Escrow Deal Flow (New)
+
+```
+Seller creates deal with escrow workflow enabled
+  → Invites all parties (buyer, broker, intermediary)
+  → All parties accept → Phase: Listing → Documentation
+  → Seller uploads required documents (SPA, NCNDA, assay requirements)
+  → Seller submits for review → Phase: Documentation → Buyer Review
+  → Buyer reviews, verifies authenticity
+  → Buyer approves → Phase: Buyer Review → Testing
+  → Physical testing at secure location (refinery)
+  → Intermediary records test results + uploads assay report
+  → Chain of Custody INITIATED: commodity sealed at refinery
+    → Seal ID recorded, photo taken, weight verified
+  → Intermediary advances → Phase: Testing → Fund Blocking
+  → Custody checkpoints tracked as commodity moves:
+    → [1] Sealed at Refinery (both sides confirm)
+    → [2] Stored in Vault (optional, both sides confirm)
+    → [3] Transferred to Logistics (both sides confirm)
+    → [4] Arrived at Delivery Point (both sides confirm)
+  → Buyer blocks funds, provides bank reference + proof document
+  → Intermediary confirms funds visible → Escrow: block_confirmed
+  → Intermediary advances → Phase: Fund Blocking → Fund Release
+  → [5] Received by Buyer (final custody checkpoint, both sides confirm)
+  → ALL custody checkpoints confirmed + delivery confirmed
+  → Intermediary triggers fund release
+  → Commission settled atomically → Phase: Completed
+```
+
+### 5.6 Chain of Custody Flow
+
+```
+Commodity tested and sealed at refinery
+  → Platform generates seal ID (e.g., DV-2026-001-C001)
+  → At each handoff point, the responsible party:
+    1. Takes geotagged photo of sealed package
+    2. Verifies seal is intact (yes/no)
+    3. Records weight
+    4. Adds notes
+  → Counterparty independently confirms each checkpoint
+  → Serial numbers cross-referenced: assay serial must match delivery
+  → Weight auto-compared: >0.01% variance triggers alert
+  → Fund release blocked until ALL mandatory checkpoints confirmed
 ```
 
 ---
@@ -318,12 +388,15 @@ Creator reviews deal completeness
 | Risk | Probability | Impact | Mitigation |
 |------|------------|--------|------------|
 | Low user adoption | Medium | High | Free tier lowers barrier; focus on WhatsApp-to-DealVault migration path |
-| Competing product enters market | Low | Medium | First-mover advantage; deep domain specificity |
+| Competing product enters market | Low | Medium | First-mover advantage; deep domain specificity; chain of custody is unique differentiator |
 | Document storage costs | Medium | Low | S3-compatible storage; enforce file size limits |
-| Regulatory compliance | Medium | Medium | Consult legal on POPIA (SA), data residency requirements |
+| Regulatory compliance | Medium | Medium | Consult legal on POPIA (SA), data residency; custody chain satisfies Precious Metals Act register requirement |
 | Security breach | Low | Critical | 2FA, rate limiting, input validation, security headers, regular audits |
-| User expects mobile app | High | Medium | PWA capability planned; responsive design already implemented |
+| User expects mobile app | High | Medium | PWA capability planned; responsive design already implemented; custody checkpoints designed for phone camera + GPS |
 | Commission disputes despite platform | Medium | Low | Immutable audit trail provides evidence; platform is record-keeper, not arbitrator |
+| Commodity swap fraud | High | Critical | Chain of custody tracking with 5 checkpoints, dual-party confirmation, serial/weight verification, geotagged photo evidence |
+| Escrow fund disputes | Medium | High | Ledger-based tracking with proof documents; intermediary confirmation required; full audit trail for legal proceedings |
+| Insurance claim rejection | Medium | High | Documented handoffs at every custody transfer satisfy insurance evidence requirements |
 
 ---
 
