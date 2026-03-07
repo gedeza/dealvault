@@ -32,7 +32,7 @@ export function Sidebar() {
   return (
     <aside className="hidden md:flex w-64 flex-col border-r bg-background">
       <div className="flex h-16 items-center gap-2 border-b px-6">
-        <Shield className="h-6 w-6 text-emerald-600" />
+        <Shield className="h-6 w-6 text-primary" />
         <span className="text-lg font-bold">DealVault</span>
       </div>
       <nav className="flex-1 space-y-1 p-4">
@@ -47,8 +47,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-primary/10 text-primary dark:bg-primary/15"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
               <Icon className="h-4 w-4" />

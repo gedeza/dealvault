@@ -224,7 +224,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="w-full bg-muted rounded-full h-2">
                           <div
-                            className="bg-emerald-500 h-2 rounded-full transition-all"
+                            className="bg-primary h-2 rounded-full transition-all"
                             style={{ width: `${(count / deals.length) * 100}%` }}
                           />
                         </div>
@@ -306,7 +306,7 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {deals.slice(0, 6).map((deal) => (
               <Link key={deal.id} href={`/deals/${deal.id}`}>
-                <Card className="hover:border-emerald-200 transition-colors cursor-pointer">
+                <Card className="hover:border-primary/30 transition-colors cursor-pointer">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <CardDescription>{deal.dealNumber}</CardDescription>
@@ -350,11 +350,11 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {activity.slice(0, 10).map((event) => (
                   <div key={event.id} className="flex gap-3 border-b pb-3 last:border-0">
-                    <div className="flex-shrink-0 w-2 h-2 rounded-full bg-emerald-500 mt-2" />
+                    <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm truncate">{event.description}</p>
                       <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <Link href={`/deals/${event.deal.id}`} className="text-emerald-600 hover:underline">
+                        <Link href={`/deals/${event.deal.id}`} className="text-primary hover:underline">
                           {event.deal.dealNumber}
                         </Link>
                         <span>by {event.user.name}</span>

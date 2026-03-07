@@ -27,7 +27,7 @@ export default function DashboardLayout({
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Shield className="h-10 w-10 text-emerald-600 animate-pulse" />
+          <Shield className="h-10 w-10 text-primary animate-pulse" />
           <p className="text-sm text-muted-foreground">Loading DealVault...</p>
         </div>
       </div>

@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
-            <Shield className="h-8 w-8 text-emerald-600" />
+            <Shield className="h-8 w-8 text-primary" />
           </div>
           <CardTitle>Forgot Password</CardTitle>
           <CardDescription>
@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
         <CardContent>
           {sent ? (
             <div className="space-y-4">
-              <div className="rounded-md bg-emerald-50 p-4 text-sm text-emerald-700">
+              <div className="rounded-md bg-primary/5 p-4 text-sm text-primary">
                 If an account with that email exists, a reset link has been generated.
               </div>
               {devToken && (
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
                   <p className="font-mono text-xs break-all text-amber-700">{devToken}</p>
                   <Link
                     href={`/reset-password?token=${devToken}`}
-                    className="text-emerald-600 hover:underline text-sm mt-2 inline-block"
+                    className="text-primary hover:underline text-sm mt-2 inline-block"
                   >
                     Reset password now
                   </Link>
@@ -101,7 +101,7 @@ export default function ForgotPasswordPage() {
                 {loading ? "Sending..." : "Send Reset Link"}
               </Button>
               <p className="text-center text-sm text-muted-foreground">
-                <Link href="/login" className="text-emerald-600 hover:underline">
+                <Link href="/login" className="text-primary hover:underline">
                   Back to Login
                 </Link>
               </p>

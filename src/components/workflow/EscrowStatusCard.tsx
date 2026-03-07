@@ -140,7 +140,7 @@ export function EscrowStatusCard({
                   <div
                     className={cn(
                       "w-6 h-6 rounded-full flex items-center justify-center text-xs",
-                      isCompleted && "bg-emerald-500 text-white",
+                      isCompleted && "bg-primary text-white",
                       isCurrent && "bg-blue-500 text-white",
                       !isCompleted && !isCurrent && "bg-muted text-muted-foreground"
                     )}
@@ -158,7 +158,7 @@ export function EscrowStatusCard({
                 {index < ESCROW_STEPS.length - 1 && (
                   <div className={cn(
                     "h-0.5 w-full",
-                    index < currentStep ? "bg-emerald-500" : "bg-muted"
+                    index < currentStep ? "bg-primary" : "bg-muted"
                   )} />
                 )}
               </div>

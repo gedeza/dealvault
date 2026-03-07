@@ -160,7 +160,7 @@ export function CustodyTracker({
               key={cp.id}
               className={cn(
                 "border rounded-lg p-3 transition-all",
-                cp.isComplete && "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-900/10",
+                cp.isComplete && "border-primary/30 bg-primary/5 dark:border-primary/20 dark:bg-primary/5",
                 hasDispute && "border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-900/10",
                 !cp.isComplete && !hasDispute && "border-border"
               )}
@@ -173,7 +173,7 @@ export function CustodyTracker({
                 <div
                   className={cn(
                     "w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0",
-                    cp.isComplete && "bg-emerald-500 text-white",
+                    cp.isComplete && "bg-primary text-primary-foreground",
                     hasDispute && "bg-red-500 text-white",
                     !cp.isComplete && !hasDispute && hasEvidence && "bg-blue-500 text-white",
                     !cp.isComplete && !hasDispute && !hasEvidence && "bg-muted text-muted-foreground"
@@ -228,7 +228,7 @@ export function CustodyTracker({
                       variant="outline"
                       className={cn(
                         "text-xs",
-                        conf.status === "confirmed" && "border-emerald-300 text-emerald-700",
+                        conf.status === "confirmed" && "border-primary/40 text-primary",
                         conf.status === "disputed" && "border-red-300 text-red-700"
                       )}
                     >
@@ -273,7 +273,7 @@ export function CustodyTracker({
                           <Badge
                             variant="outline"
                             className={cn(
-                              conf.status === "confirmed" && "border-emerald-300",
+                              conf.status === "confirmed" && "border-primary/40",
                               conf.status === "disputed" && "border-red-300"
                             )}
                           >

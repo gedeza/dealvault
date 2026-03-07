@@ -204,7 +204,7 @@ export default function DealsPage() {
                     <TableCell>
                       <Link
                         href={`/deals/${deal.id}`}
-                        className="text-emerald-600 hover:underline font-medium"
+                        className="text-primary hover:underline font-medium"
                       >
                         {deal.dealNumber}
                       </Link>
@@ -236,9 +236,9 @@ export default function DealsPage() {
           <div className="md:hidden space-y-3">
             {deals.map((deal) => (
               <Link key={deal.id} href={`/deals/${deal.id}`}>
-                <div className="border rounded-lg p-4 bg-background hover:border-emerald-200 transition-colors">
+                <div className="border rounded-lg p-4 bg-background hover:border-primary/30 transition-colors">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-emerald-600 font-medium">{deal.dealNumber}</span>
+                    <span className="text-sm text-primary font-medium">{deal.dealNumber}</span>
                     <Badge variant="secondary" className={DEAL_STATUS_COLORS[deal.status]}>
                       {DEAL_STATUS_LABELS[deal.status]}
                     </Badge>

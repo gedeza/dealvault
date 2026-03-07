@@ -173,7 +173,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent>
           {message && (
-            <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700 mb-4">
+            <div className="rounded-md bg-primary/5 p-3 text-sm text-primary mb-4">
               {message}
             </div>
           )}
@@ -221,7 +221,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent>
           {passwordSuccess && (
-            <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700 mb-4">
+            <div className="rounded-md bg-primary/5 p-3 text-sm text-primary mb-4">
               {passwordSuccess}
             </div>
           )}
@@ -361,7 +361,7 @@ function TwoFactorSettings({ enabled }: { enabled: boolean }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {tfaSuccess && (
-          <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">
+          <div className="rounded-md bg-primary/5 p-3 text-sm text-primary">
             {tfaSuccess}
           </div>
         )}

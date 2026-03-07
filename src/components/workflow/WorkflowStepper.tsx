@@ -31,7 +31,7 @@ export function WorkflowStepper({ currentPhase }: WorkflowStepperProps) {
         <div className="absolute top-4 left-0 right-0 h-0.5 bg-muted" />
         {/* Progress line */}
         <div
-          className="absolute top-4 left-0 h-0.5 bg-emerald-500 transition-all duration-500"
+          className="absolute top-4 left-0 h-0.5 bg-primary transition-all duration-500"
           style={{
             width: `${(currentIndex / (WORKFLOW_DEAL_PHASES.length - 1)) * 100}%`,
           }}
@@ -50,7 +50,7 @@ export function WorkflowStepper({ currentPhase }: WorkflowStepperProps) {
               <div
                 className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all",
-                  isCompleted && "bg-emerald-500 text-white",
+                  isCompleted && "bg-primary text-white",
                   isCurrent && "bg-blue-500 text-white ring-4 ring-blue-500/20",
                   isFuture && "bg-muted text-muted-foreground"
                 )}
@@ -66,7 +66,7 @@ export function WorkflowStepper({ currentPhase }: WorkflowStepperProps) {
                   "text-xs mt-2 text-center max-w-[80px]",
                   isCurrent && "font-semibold text-foreground",
                   isFuture && "text-muted-foreground",
-                  isCompleted && "text-emerald-600 dark:text-emerald-400"
+                  isCompleted && "text-primary"
                 )}
               >
                 {WORKFLOW_PHASE_LABELS[phase]}
@@ -87,7 +87,7 @@ export function WorkflowStepper({ currentPhase }: WorkflowStepperProps) {
               <div
                 className={cn(
                   "w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0",
-                  isCompleted && "bg-emerald-500 text-white",
+                  isCompleted && "bg-primary text-white",
                   isCurrent && "bg-blue-500 text-white",
                   !isCompleted && !isCurrent && "bg-muted text-muted-foreground"
                 )}

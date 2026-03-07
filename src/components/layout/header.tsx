@@ -88,7 +88,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
       case "message_sent":
         return <MessageSquare className="h-4 w-4 text-purple-500" />;
       case "status_changed":
-        return <RefreshCw className="h-4 w-4 text-emerald-500" />;
+        return <RefreshCw className="h-4 w-4 text-primary" />;
       case "commission_agreed":
       case "deal_settled":
         return <DollarSign className="h-4 w-4 text-green-500" />;
@@ -115,7 +115,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
           <span className="sr-only">Toggle menu</span>
         </Button>
         <div className="md:hidden flex items-center gap-2">
-          <Shield className="h-5 w-5 text-emerald-600" />
+          <Shield className="h-5 w-5 text-primary" />
           <span className="font-bold">DealVault</span>
         </div>
       </div>
@@ -167,7 +167,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
                   <DropdownMenuItem
                     key={n.id}
                     className={`flex items-start gap-3 p-3 cursor-pointer ${
-                      !n.read ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
+                      !n.read ? "bg-primary/5 dark:bg-primary/10" : ""
                     }`}
                     onClick={() => {
                       if (!n.read) markAsRead(n.id);
@@ -196,7 +196,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xs">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs">
                   {initials}
                 </AvatarFallback>
               </Avatar>

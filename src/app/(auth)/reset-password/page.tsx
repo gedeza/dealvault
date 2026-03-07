@@ -20,8 +20,8 @@ function getPasswordStrength(password: string): { score: number; label: string; 
   if (score <= 1) return { score, label: "Weak", color: "bg-red-500" };
   if (score <= 2) return { score, label: "Fair", color: "bg-orange-500" };
   if (score <= 3) return { score, label: "Good", color: "bg-yellow-500" };
-  if (score <= 4) return { score, label: "Strong", color: "bg-emerald-500" };
-  return { score, label: "Very Strong", color: "bg-emerald-600" };
+  if (score <= 4) return { score, label: "Strong", color: "bg-primary" };
+  return { score, label: "Very Strong", color: "bg-primary" };
 }
 
 function ResetPasswordForm() {
@@ -73,7 +73,7 @@ function ResetPasswordForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-2">
-          <Shield className="h-8 w-8 text-emerald-600" />
+          <Shield className="h-8 w-8 text-primary" />
         </div>
         <CardTitle>Reset Password</CardTitle>
         <CardDescription>Enter your new password</CardDescription>
@@ -81,7 +81,7 @@ function ResetPasswordForm() {
       <CardContent>
         {success ? (
           <div className="space-y-4">
-            <div className="rounded-md bg-emerald-50 p-4 text-sm text-emerald-700">
+            <div className="rounded-md bg-primary/5 p-4 text-sm text-primary">
               Password reset successfully. You can now log in.
             </div>
             <Link href="/login">

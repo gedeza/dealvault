@@ -205,7 +205,7 @@ export default function AdminPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-emerald-600" />
+          <ShieldCheck className="h-6 w-6 text-primary" />
           Admin Panel
         </h1>
         <p className="text-muted-foreground">
@@ -302,7 +302,7 @@ export default function AdminPage() {
                       <div className="flex-1">
                         <div className="w-full bg-muted rounded-full h-3">
                           <div
-                            className="bg-emerald-500 h-3 rounded-full transition-all"
+                            className="bg-primary h-3 rounded-full transition-all"
                             style={{
                               width: `${(item.count / maxBarCount) * 100}%`,
                             }}
@@ -432,7 +432,7 @@ export default function AdminPage() {
                           <TableCell>
                             <Badge
                               variant={user.role === "admin" ? "default" : "secondary"}
-                              className={user.role === "admin" ? "bg-emerald-100 text-emerald-800" : ""}
+                              className={user.role === "admin" ? "bg-primary/10 text-primary" : ""}
                             >
                               {user.role}
                             </Badge>
@@ -482,7 +482,7 @@ export default function AdminPage() {
                         </div>
                         <Badge
                           variant={user.role === "admin" ? "default" : "secondary"}
-                          className={user.role === "admin" ? "bg-emerald-100 text-emerald-800" : ""}
+                          className={user.role === "admin" ? "bg-primary/10 text-primary" : ""}
                         >
                           {user.role}
                         </Badge>

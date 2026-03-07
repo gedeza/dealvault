@@ -28,8 +28,8 @@ function getPasswordStrength(password: string): { score: number; label: string; 
   if (score <= 1) return { score, label: "Weak", color: "bg-red-500" };
   if (score <= 2) return { score, label: "Fair", color: "bg-orange-500" };
   if (score <= 3) return { score, label: "Good", color: "bg-yellow-500" };
-  if (score <= 4) return { score, label: "Strong", color: "bg-emerald-500" };
-  return { score, label: "Very Strong", color: "bg-emerald-600" };
+  if (score <= 4) return { score, label: "Strong", color: "bg-primary" };
+  return { score, label: "Very Strong", color: "bg-primary" };
 }
 
 export default function RegisterPage() {
@@ -98,8 +98,8 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-            <Shield className="h-6 w-6 text-emerald-600" />
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <Shield className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl">Create your account</CardTitle>
           <CardDescription>
@@ -213,7 +213,7 @@ export default function RegisterPage() {
             </Button>
             <p className="text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/login" className="text-emerald-600 hover:underline">
+              <Link href="/login" className="text-primary hover:underline">
                 Sign in
               </Link>
             </p>
