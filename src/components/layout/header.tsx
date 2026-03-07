@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, User, Shield, Menu, Sun, Moon, Bell, Check } from "lucide-react";
+import { LogOut, User, Shield, Menu, Sun, Moon, Bell, Check, FileText, Users, MessageSquare, DollarSign, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 interface Notification {
@@ -75,6 +75,26 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
       body: JSON.stringify({ id }),
     });
     refreshAndUpdate();
+  }
+
+  function getNotificationIcon(type: string) {
+    switch (type) {
+      case "party_invited":
+      case "party_accepted":
+        return <Users className="h-4 w-4 text-blue-500" />;
+      case "document_uploaded":
+      case "document_verified":
+        return <FileText className="h-4 w-4 text-amber-500" />;
+      case "message_sent":
+        return <MessageSquare className="h-4 w-4 text-purple-500" />;
+      case "status_changed":
+        return <RefreshCw className="h-4 w-4 text-emerald-500" />;
+      case "commission_agreed":
+      case "deal_settled":
+        return <DollarSign className="h-4 w-4 text-green-500" />;
+      default:
+        return <Bell className="h-4 w-4 text-muted-foreground" />;
+    }
   }
 
   async function markAllAsRead() {
@@ -146,7 +166,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
                 {notifications.slice(0, 10).map((n) => (
                   <DropdownMenuItem
                     key={n.id}
-                    className={`flex flex-col items-start gap-1 p-3 cursor-pointer ${
+                    className={`flex items-start gap-3 p-3 cursor-pointer ${
                       !n.read ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
                     }`}
                     onClick={() => {
@@ -154,11 +174,16 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
                       if (n.link) router.push(n.link);
                     }}
                   >
-                    <span className="text-sm font-medium">{n.title}</span>
-                    <span className="text-xs text-muted-foreground">{n.message}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(n.createdAt).toLocaleString()}
-                    </span>
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getNotificationIcon(n.type)}
+                    </div>
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span className="text-sm font-medium">{n.title}</span>
+                      <span className="text-xs text-muted-foreground truncate">{n.message}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(n.createdAt).toLocaleString()}
+                      </span>
+                    </div>
                   </DropdownMenuItem>
                 ))}
               </div>

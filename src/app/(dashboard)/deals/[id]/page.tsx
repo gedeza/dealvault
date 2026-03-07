@@ -451,9 +451,10 @@ export default function DealRoomPage() {
             </CardHeader>
             <CardContent>
               {deal.parties.filter((p) => p.commissionPct > 0).length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No commission allocations yet
-                </p>
+                <div className="flex flex-col items-center py-6 text-muted-foreground">
+                  <DollarSign className="h-8 w-8 mb-2" />
+                  <p className="text-sm">No commission allocations yet</p>
+                </div>
               ) : (
                 <>
                   <Table>
@@ -507,9 +508,10 @@ export default function DealRoomPage() {
             <CardContent className="pt-6">
               <div className="space-y-4 max-h-96 overflow-y-auto mb-4">
                 {deal.messages.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No messages yet. Start the conversation.
-                  </p>
+                  <div className="flex flex-col items-center text-muted-foreground py-8">
+                    <MessageSquare className="h-8 w-8 mb-2" />
+                    <p className="text-sm">No messages yet. Start the conversation.</p>
+                  </div>
                 ) : (
                   deal.messages.map((msg) => {
                     const isMe = msg.sender.id === session?.user?.id;
@@ -584,7 +586,10 @@ export default function DealRoomPage() {
             </CardHeader>
             <CardContent>
               {deal.timeline.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No events yet</p>
+                <div className="flex flex-col items-center py-6 text-muted-foreground">
+                  <Clock className="h-8 w-8 mb-2" />
+                  <p className="text-sm">No events yet</p>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {deal.timeline.map((event) => (
@@ -1056,8 +1061,9 @@ function DocumentPreview({
   if (documents.length === 0) {
     return (
       <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          No documents uploaded yet
+        <CardContent className="flex flex-col items-center py-8 text-muted-foreground">
+          <FileUp className="h-8 w-8 mb-2" />
+          <p className="text-sm">No documents uploaded yet</p>
         </CardContent>
       </Card>
     );

@@ -34,7 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Check, AlertTriangle } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Check, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -230,6 +230,7 @@ export default function CompaniesPage() {
               </div>
               <div className="flex gap-2">
                 <Button type="submit" disabled={saving}>
+                  {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   {saving ? "Saving..." : editingId ? "Update" : "Create"}
                 </Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
@@ -343,6 +344,7 @@ export default function CompaniesPage() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {deleting ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>

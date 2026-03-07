@@ -15,7 +15,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Shield, Eye, EyeOff } from "lucide-react";
+import { Shield, Eye, EyeOff, Loader2 } from "lucide-react";
+
+function getPasswordStrength(password: string): { score: number; label: string; color: string } {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  if (score <= 1) return { score, label: "Weak", color: "bg-red-500" };
+  if (score <= 2) return { score, label: "Fair", color: "bg-orange-500" };
+  if (score <= 3) return { score, label: "Good", color: "bg-yellow-500" };
+  if (score <= 4) return { score, label: "Strong", color: "bg-emerald-500" };
+  return { score, label: "Very Strong", color: "bg-emerald-600" };
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -23,6 +38,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -136,6 +152,8 @@ export default function RegisterPage() {
                   required
                   minLength={8}
                   className="pr-10"
+                  value={passwordValue}
+                  onChange={(e) => setPasswordValue(e.target.value)}
                 />
                 <button
                   type="button"
@@ -146,6 +164,24 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {passwordValue && (() => {
+                const strength = getPasswordStrength(passwordValue);
+                return (
+                  <div className="space-y-1">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div
+                          key={i}
+                          className={`h-1.5 flex-1 rounded-full transition-colors ${
+                            i <= strength.score ? strength.color : "bg-muted"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{strength.label}</p>
+                  </div>
+                );
+              })()}
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -172,6 +208,7 @@ export default function RegisterPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {loading ? "Creating account..." : "Create Account"}
             </Button>
             <p className="text-sm text-muted-foreground">
