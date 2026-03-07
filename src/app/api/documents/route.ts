@@ -1,0 +1,137 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { prisma } from "@/lib/db";
+import { authOptions } from "@/lib/auth";
+import { saveFile, validateFile, validateFileBytes } from "@/lib/storage";
+import { logTimelineEvent } from "@/services/timeline.service";
+
+export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const formData = await req.formData();
+    const file = formData.get("file") as File | null;
+    const dealId = formData.get("dealId") as string;
+    const type = formData.get("type") as string;
+    const visibility = (formData.get("visibility") as string) || "deal";
+
+    if (!file || !dealId || !type) {
+      return NextResponse.json(
+        { error: "File, dealId, and type are required" },
+        { status: 400 }
+      );
+    }
+
+    const validationError = validateFile(file);
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    // Server-side magic byte validation
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+    const bytesError = validateFileBytes(fileBuffer, ext);
+    if (bytesError) {
+      return NextResponse.json({ error: bytesError }, { status: 400 });
+    }
+
+    const deal = await prisma.deal.findUnique({ where: { id: dealId } });
+    if (!deal) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+    }
+
+    const party = await prisma.dealParty.findUnique({
+      where: { dealId_userId: { dealId, userId: session.user.id } },
+    });
+    if (!party && deal.creatorId !== session.user.id) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    const { filePath, sha256Hash, fileSize } = await saveFile(file, dealId, fileBuffer);
+
+    const document = await prisma.document.create({
+      data: {
+        name: file.name,
+        type,
+        filePath,
+        fileSize,
+        mimeType: file.type || "application/octet-stream",
+        sha256Hash,
+        visibility,
+        dealId,
+        uploaderId: session.user.id,
+      },
+    });
+
+    await logTimelineEvent({
+      dealId,
+      userId: session.user.id,
+      eventType: "document_uploaded",
+      description: `Document "${file.name}" (${type}) uploaded`,
+      metadata: { documentId: document.id, type, sha256Hash },
+    });
+
+    return NextResponse.json(document, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to upload document" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const dealId = searchParams.get("dealId");
+
+  if (!dealId) {
+    return NextResponse.json({ error: "dealId required" }, { status: 400 });
+  }
+
+  const deal = await prisma.deal.findUnique({
+    where: { id: dealId },
+    include: { parties: true },
+  });
+
+  if (!deal) {
+    return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+  }
+
+  const userParty = deal.parties.find((p) => p.userId === session.user.id);
+  const isCreator = deal.creatorId === session.user.id;
+
+  if (!userParty && !isCreator) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
+
+  const documents = await prisma.document.findMany({
+    where: { dealId },
+    include: {
+      uploader: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const userSide = userParty?.side;
+  const filtered = documents.filter((doc) => {
+    if (doc.visibility === "deal") return true;
+    if (doc.visibility === "private") return doc.uploaderId === session.user.id;
+    if (doc.visibility === "side" && userSide) {
+      return doc.uploaderId === session.user.id ||
+        deal.parties.some(
+          (p) => p.userId === doc.uploaderId && p.side === userSide
+        );
+    }
+    return false;
+  });
+
+  return NextResponse.json(filtered);
+}

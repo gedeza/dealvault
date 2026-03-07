@@ -1,0 +1,622 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "DealVault API",
+    "version": "1.0.0",
+    "description": "Commodity deal room management platform API. All endpoints require authentication via NextAuth session unless noted otherwise."
+  },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Development" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "next-auth.session-token"
+      }
+    },
+    "schemas": {
+      "Deal": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "dealNumber": { "type": "string", "example": "DV-2026-0001" },
+          "title": { "type": "string" },
+          "commodity": { "type": "string", "enum": ["gold", "diamonds", "platinum"] },
+          "quantity": { "type": "number" },
+          "unit": { "type": "string" },
+          "value": { "type": "number" },
+          "currency": { "type": "string", "default": "USD" },
+          "commissionPool": { "type": "number", "minimum": 0, "maximum": 1 },
+          "status": { "$ref": "#/components/schemas/DealStatus" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DealStatus": {
+        "type": "string",
+        "enum": ["draft", "documents_pending", "under_review", "verified", "in_progress", "settled", "closed", "cancelled"]
+      },
+      "Party": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "role": { "type": "string", "enum": ["seller", "buyer", "seller_mandate", "buyer_mandate", "intermediary", "facilitator"] },
+          "side": { "type": "string", "enum": ["sell", "buy"] },
+          "positionInChain": { "type": "integer" },
+          "commissionPct": { "type": "number" },
+          "status": { "type": "string", "enum": ["invited", "accepted", "rejected"] },
+          "user": { "$ref": "#/components/schemas/UserSummary" }
+        }
+      },
+      "Document": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["SPA", "NCNDA", "IMFPA", "BCL", "POF", "FCO", "ICPO", "LOI", "KYC", "AML", "other"] },
+          "fileSize": { "type": "integer" },
+          "sha256Hash": { "type": "string" },
+          "verified": { "type": "boolean" },
+          "visibility": { "type": "string", "enum": ["deal", "side", "private"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "content": { "type": "string" },
+          "visibility": { "type": "string", "enum": ["deal", "side", "private"] },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "sender": { "$ref": "#/components/schemas/UserSummary" }
+        }
+      },
+      "TimelineEvent": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "eventType": { "type": "string" },
+          "description": { "type": "string" },
+          "metadata": { "type": "object", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "user": { "$ref": "#/components/schemas/UserSummary" }
+        }
+      },
+      "CommissionEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "agreedPct": { "type": "number" },
+          "calculatedAmount": { "type": "number" },
+          "status": { "type": "string", "enum": ["pending", "paid", "disputed"] },
+          "party": { "$ref": "#/components/schemas/Party" }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "type": { "type": "string" },
+          "title": { "type": "string" },
+          "message": { "type": "string" },
+          "read": { "type": "boolean" },
+          "dealId": { "type": "string", "format": "uuid", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Company": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "registrationNumber": { "type": "string", "nullable": true },
+          "country": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserSummary": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer" },
+          "limit": { "type": "integer" },
+          "total": { "type": "integer" },
+          "totalPages": { "type": "integer" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  },
+  "security": [{ "session": [] }],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 2 },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 },
+                  "phone": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created successfully" },
+          "400": { "description": "Validation error or email already exists" }
+        }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Request password reset token",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Reset email sent (always returns success to prevent enumeration)" }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset password with token",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token", "password"],
+                "properties": {
+                  "token": { "type": "string" },
+                  "password": { "type": "string", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password reset successfully" },
+          "400": { "description": "Invalid or expired token" }
+        }
+      }
+    },
+    "/api/deals": {
+      "get": {
+        "tags": ["Deals"],
+        "summary": "List deals (with search, filters, pagination)",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Search by title or deal number" },
+          { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/DealStatus" } },
+          { "name": "commodity", "in": "query", "schema": { "type": "string", "enum": ["gold", "diamonds", "platinum"] } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20, "maximum": 50 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of deals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deals": { "type": "array", "items": { "$ref": "#/components/schemas/Deal" } },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Deals"],
+        "summary": "Create a new deal room",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "commodity", "quantity", "unit", "value"],
+                "properties": {
+                  "title": { "type": "string", "minLength": 3 },
+                  "commodity": { "type": "string", "enum": ["gold", "diamonds", "platinum"] },
+                  "quantity": { "type": "number", "exclusiveMinimum": 0 },
+                  "unit": { "type": "string", "minLength": 1 },
+                  "value": { "type": "number", "exclusiveMinimum": 0 },
+                  "currency": { "type": "string", "default": "USD" },
+                  "commissionPool": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.02 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Deal created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Deal" } } } },
+          "400": { "description": "Validation error" }
+        }
+      }
+    },
+    "/api/deals/{id}": {
+      "get": {
+        "tags": ["Deals"],
+        "summary": "Get deal details with parties, documents, messages, timeline",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Full deal object with nested relations" },
+          "403": { "description": "Not a party to this deal" },
+          "404": { "description": "Deal not found" }
+        }
+      },
+      "patch": {
+        "tags": ["Deals"],
+        "summary": "Update deal (status changes enforce state machine)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": { "$ref": "#/components/schemas/DealStatus" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deal updated" },
+          "400": { "description": "Invalid status transition" },
+          "403": { "description": "Only creator can update" }
+        }
+      }
+    },
+    "/api/deals/{id}/parties": {
+      "post": {
+        "tags": ["Parties"],
+        "summary": "Invite a party to the deal",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "role"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "role": { "type": "string", "enum": ["seller", "buyer", "seller_mandate", "buyer_mandate", "intermediary", "facilitator"] },
+                  "commissionPct": { "type": "number", "minimum": 0, "default": 0 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Party invited" },
+          "400": { "description": "User not found or already a party" },
+          "403": { "description": "Only creator can invite" }
+        }
+      }
+    },
+    "/api/deals/{id}/parties/{partyId}": {
+      "patch": {
+        "tags": ["Parties"],
+        "summary": "Accept or reject party invitation",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "partyId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": { "type": "string", "enum": ["accept", "reject"] },
+                  "companyId": { "type": "string", "description": "Optional company to link" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Party status updated" },
+          "403": { "description": "Can only respond to own invitation" }
+        }
+      }
+    },
+    "/api/deals/{id}/messages": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "List messages (filtered by visibility)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Array of messages", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } } } } }
+        }
+      },
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Send a message in the deal room",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": { "type": "string" },
+                  "visibility": { "type": "string", "enum": ["deal", "side", "private"], "default": "deal" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Message sent" }
+        }
+      }
+    },
+    "/api/deals/{id}/commission": {
+      "get": {
+        "tags": ["Commission"],
+        "summary": "List commission ledger entries",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Array of commission entries" }
+        }
+      },
+      "post": {
+        "tags": ["Commission"],
+        "summary": "Set/update commission for a party",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["partyId", "agreedPct"],
+                "properties": {
+                  "partyId": { "type": "string" },
+                  "agreedPct": { "type": "number", "minimum": 0, "description": "Decimal (e.g. 0.005 = 0.5%)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Commission set/updated" },
+          "400": { "description": "Exceeds commission pool" }
+        }
+      }
+    },
+    "/api/deals/{id}/settle": {
+      "post": {
+        "tags": ["Deals"],
+        "summary": "Initiate settlement (all parties must be accepted)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Deal settled, commission ledger entries created" },
+          "400": { "description": "Not all parties accepted or invalid state" }
+        }
+      }
+    },
+    "/api/deals/{id}/export": {
+      "get": {
+        "tags": ["Deals"],
+        "summary": "Export audit log as CSV or JSON",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["csv", "json"], "default": "json" } }
+        ],
+        "responses": {
+          "200": { "description": "Audit log export file" }
+        }
+      }
+    },
+    "/api/documents": {
+      "post": {
+        "tags": ["Documents"],
+        "summary": "Upload a document to a deal",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "dealId", "type"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" },
+                  "dealId": { "type": "string" },
+                  "type": { "type": "string", "enum": ["SPA", "NCNDA", "IMFPA", "BCL", "POF", "FCO", "ICPO", "LOI", "KYC", "AML", "other"] },
+                  "visibility": { "type": "string", "enum": ["deal", "side", "private"], "default": "deal" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Document uploaded" },
+          "400": { "description": "File validation failed (type/size)" }
+        }
+      }
+    },
+    "/api/documents/{id}": {
+      "get": {
+        "tags": ["Documents"],
+        "summary": "Download a document (access control + visibility enforced)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "File download stream" },
+          "403": { "description": "Access denied" },
+          "404": { "description": "Document not found" }
+        }
+      }
+    },
+    "/api/companies": {
+      "get": {
+        "tags": ["Companies"],
+        "summary": "List all companies created by user",
+        "responses": {
+          "200": { "description": "Array of companies" }
+        }
+      },
+      "post": {
+        "tags": ["Companies"],
+        "summary": "Create a company",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 2 },
+                  "registrationNumber": { "type": "string" },
+                  "country": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Company created" }
+        }
+      }
+    },
+    "/api/companies/{id}": {
+      "patch": {
+        "tags": ["Companies"],
+        "summary": "Update a company",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Company updated" } }
+      },
+      "delete": {
+        "tags": ["Companies"],
+        "summary": "Delete a company (fails if linked to deals)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Company deleted" },
+          "400": { "description": "Company is linked to active deals" }
+        }
+      }
+    },
+    "/api/profile": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Get current user profile with stats",
+        "responses": { "200": { "description": "User profile with deal counts" } }
+      },
+      "patch": {
+        "tags": ["Profile"],
+        "summary": "Update profile (name, phone, password)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "currentPassword": { "type": "string", "description": "Required when changing password" },
+                  "newPassword": { "type": "string", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profile updated" },
+          "400": { "description": "Current password incorrect" }
+        }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "List notifications with unread count",
+        "responses": {
+          "200": {
+            "description": "Notifications and unread count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notifications": { "type": "array", "items": { "$ref": "#/components/schemas/Notification" } },
+                    "unreadCount": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Notifications"],
+        "summary": "Mark notifications as read",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "description": "Single notification ID" },
+                  "all": { "type": "boolean", "description": "Mark all as read" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Notifications marked as read" } }
+      }
+    }
+  }
+}

@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  phone         String?
+  passwordHash  String
+  role             String   @default("user")
+  emailVerified    Boolean  @default(false)
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  companies      Company[]
+  dealParties    DealParty[]
+  createdDeals   Deal[]          @relation("DealCreator")
+  documents      Document[]
+  timelineEvents DealTimeline[]
+  messages       Message[]
+  passwordResets  PasswordReset[]
+  notifications   Notification[]
+  usedTotpCodes   UsedTotpCode[]
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
+model Company {
+  id                 String   @id @default(cuid())
+  name               String
+  registrationNumber String?
+  taxNumber          String?
+  country            String   @default("South Africa")
+  verified           Boolean  @default(false)
+  verifiedAt         DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  dealParties        DealParty[]
+
+  @@index([userId])
+}
+
+model Deal {
+  id              String   @id @default(cuid())
+  dealNumber      String   @unique
+  title           String
+  commodity       String
+  quantity        Float
+  unit            String
+  value           Float
+  currency        String   @default("USD")
+  commissionPool  Float    @default(0.02)
+  status          String   @default("draft")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  creatorId       String
+  creator         User     @relation("DealCreator", fields: [creatorId], references: [id])
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([commodity])
+  @@index([createdAt])
+
+  parties         DealParty[]
+  documents       Document[]
+  timeline        DealTimeline[]
+  messages        Message[]
+  commissionLedger CommissionLedger[]
+}
+
+model DealParty {
+  id               String   @id @default(cuid())
+  role             String
+  side             String
+  positionInChain  Int      @default(0)
+  commissionPct    Float    @default(0)
+  status           String   @default("invited")
+  invitedAt        DateTime @default(now())
+  acceptedAt       DateTime?
+  verifiedAt       DateTime?
+
+  dealId           String
+  deal             Deal     @relation(fields: [dealId], references: [id])
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  companyId        String?
+  company          Company? @relation(fields: [companyId], references: [id])
+
+  commissionLedger CommissionLedger[]
+
+  @@unique([dealId, userId])
+  @@index([userId])
+  @@index([dealId])
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  name         String
+  type         String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  sha256Hash   String
+  verified     Boolean  @default(false)
+  verifiedAt   DateTime?
+  visibility   String   @default("deal")
+  createdAt    DateTime @default(now())
+
+  dealId       String
+  deal         Deal     @relation(fields: [dealId], references: [id])
+  uploaderId   String
+  uploader     User     @relation(fields: [uploaderId], references: [id])
+
+  @@index([dealId])
+}
+
+model DealTimeline {
+  id          String   @id @default(cuid())
+  eventType   String
+  description String
+  metadata    String?
+  createdAt   DateTime @default(now())
+
+  dealId      String
+  deal        Deal     @relation(fields: [dealId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([dealId])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  visibility String   @default("deal")
+  createdAt  DateTime @default(now())
+
+  dealId     String
+  deal       Deal     @relation(fields: [dealId], references: [id])
+  senderId   String
+  sender     User     @relation(fields: [senderId], references: [id])
+
+  @@index([dealId])
+}
+
+model CommissionLedger {
+  id              String   @id @default(cuid())
+  agreedPct       Float
+  calculatedAmount Float
+  status          String   @default("agreed")
+  paidAt          DateTime?
+  createdAt       DateTime @default(now())
+
+  dealId          String
+  deal            Deal     @relation(fields: [dealId], references: [id])
+  partyId         String
+  party           DealParty @relation(fields: [partyId], references: [id])
+
+  @@index([dealId])
+}
+
+model UsedTotpCode {
+  id        String   @id @default(cuid())
+  code      String
+  usedAt    DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, code])
+  @@index([userId])
+  @@index([usedAt])
+}

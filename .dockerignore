@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.gitignore
+dev.db
+*.db
+*.db-journal
+uploads
+.env
+.env*
+.DS_Store
+npm-debug.log*
+coverage
+test-results
+playwright-report
+blob-report
+*.md
