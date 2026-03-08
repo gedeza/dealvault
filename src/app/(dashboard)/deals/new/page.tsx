@@ -25,6 +25,8 @@ import { useTwoFactor } from "@/hooks/use-two-factor";
 import { TwoFactorModal } from "@/components/security/two-factor-modal";
 import { CurrencySelector } from "@/components/currency/currency-selector";
 import { ShieldCheck } from "lucide-react";
+import { UpgradePrompt } from "@/components/billing/upgrade-prompt";
+import { useTier } from "@/hooks/useTier";
 
 const DEAL_TEMPLATES = [
   {
@@ -52,6 +54,7 @@ const DEAL_TEMPLATES = [
 
 export default function NewDealPage() {
   const router = useRouter();
+  const tierData = useTier();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [commodity, setCommodity] = useState<Commodity>("gold");
@@ -108,6 +111,14 @@ export default function NewDealPage() {
 
     const formData = new FormData(e.currentTarget);
     const value = parseFloat(formData.get("value") as string);
+
+    // Check tier deal value cap
+    if (tierData?.limits.dealValueCap && value > tierData.limits.dealValueCap) {
+      const capFormatted = `$${(tierData.limits.dealValueCap / 1_000_000).toFixed(0)}M`;
+      setError(`Deal value exceeds your ${tierData.tier} tier cap of ${capFormatted}. Upgrade your plan to handle higher-value deals.`);
+      setLoading(false);
+      return;
+    }
 
     try {
       let verificationToken: string | undefined;

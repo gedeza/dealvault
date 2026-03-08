@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3, TrendingUp, Gem, Wallet } from "lucide-react";
+import { UpgradePrompt } from "@/components/billing/upgrade-prompt";
+import { useTier } from "@/hooks/useTier";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -114,6 +116,7 @@ function PieTooltip({ active, payload }: any) {
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 export default function ReportsPage() {
+  const tierData = useTier();
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState("12m");
@@ -141,6 +144,22 @@ export default function ReportsPage() {
     { label: "Avg Deal Size", value: formatCurrency(data.summary.avgDealSize), icon: TrendingUp, color: "text-blue-500" },
     { label: "Active Deals", value: data.summary.activeDeals, icon: BarChart3, color: "text-emerald-500" },
   ] : [];
+
+  if (tierData && !tierData.limits.advancedReporting) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Reports & Analytics</h1>
+          <p className="text-sm text-muted-foreground mt-1">Interactive dashboards and deal insights</p>
+        </div>
+        <UpgradePrompt
+          feature="Advanced Reporting"
+          requiredTier="Reef"
+          description="Interactive charts, deal pipeline visualization, commodity breakdowns, and commission tracking are available on the Reef tier and above."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

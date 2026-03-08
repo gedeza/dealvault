@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { DealVaultLoader } from "@/components/ui/dealvault-loader";
+import { UpgradePrompt } from "@/components/billing/upgrade-prompt";
+import { useTier } from "@/hooks/useTier";
 import {
   Select,
   SelectContent,
@@ -144,6 +146,7 @@ interface DealFull {
 export default function DealRoomPage() {
   const params = useParams();
   const { data: session } = useSession();
+  const tierData = useTier();
   const [deal, setDeal] = useState<DealFull | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -291,7 +294,9 @@ export default function DealRoomPage() {
           <DealRiskBadge dealId={deal.id} />
           <AnomalyDetector dealId={deal.id} />
           {isCreator && !deal.workflowPhase && (
-            <EnableWorkflowButton dealId={deal.id} onEnable={refreshAll} />
+            tierData?.limits.escrowWorkflow === false
+              ? <UpgradePrompt feature="Escrow Workflow" requiredTier="Reef" compact />
+              : <EnableWorkflowButton dealId={deal.id} onEnable={refreshAll} />
           )}
           {isCreator && (
             <StatusUpdater
@@ -462,6 +467,13 @@ export default function DealRoomPage() {
         {/* Workflow Tab */}
         {deal.workflowPhase && workflow && (
           <TabsContent value="workflow" className="space-y-4">
+            {tierData?.limits.escrowWorkflow === false && (
+              <UpgradePrompt
+                feature="Escrow Workflow"
+                requiredTier="Reef"
+                description="The 6-phase escrow workflow with fund blocking, verification, and release tracking is available on the Reef tier and above."
+              />
+            )}
             <PhaseActionPanel
               dealId={deal.id}
               currentPhase={workflow.phase as WorkflowPhase}
@@ -519,7 +531,13 @@ export default function DealRoomPage() {
         {/* Custody Tab */}
         {deal.workflowPhase && (
           <TabsContent value="custody" className="space-y-4">
-            {!custody ? (
+            {tierData?.limits.chainOfCustody === false ? (
+              <UpgradePrompt
+                feature="Chain of Custody"
+                requiredTier="Sovereign"
+                description="GPS-verified 5-point custody tracking with dual-party confirmation, weight variance detection, and tamper-proof photo evidence is available on the Sovereign tier."
+              />
+            ) : !custody ? (
               <Card>
                 <CardContent className="py-8 text-center space-y-3">
                   <Link2 className="h-8 w-8 text-muted-foreground mx-auto" />
