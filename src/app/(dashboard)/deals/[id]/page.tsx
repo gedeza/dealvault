@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { DealVaultLoader } from "@/components/ui/dealvault-loader";
 import {
   Select,
   SelectContent,
@@ -234,11 +235,7 @@ export default function DealRoomPage() {
   }, [activeTab, fetchDeal]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Shield className="h-8 w-8 text-emerald-600 animate-pulse" />
-      </div>
-    );
+    return <DealVaultLoader message="Loading deal" size="md" />;
   }
 
   if (!deal) {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DealVaultLoader } from "@/components/ui/dealvault-loader";
 import {
   Card,
   CardContent,
@@ -119,7 +120,7 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return <p className="text-muted-foreground">Loading profile...</p>;
+    return <DealVaultLoader message="Loading profile" size="md" />;
   }
 
   if (!profile) {

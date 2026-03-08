@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { DealVaultLoader } from "@/components/ui/dealvault-loader";
 
 function getPasswordStrength(password: string): { score: number; label: string; color: string } {
   let score = 0;
@@ -186,7 +187,7 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-      <Suspense fallback={<div className="text-muted-foreground">Loading...</div>}>
+      <Suspense fallback={<DealVaultLoader message="Loading" size="sm" />}>
         <ResetPasswordForm />
       </Suspense>
     </div>

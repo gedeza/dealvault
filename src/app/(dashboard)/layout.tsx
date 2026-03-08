@@ -7,7 +7,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { OnboardingProvider } from "@/components/onboarding/onboarding-provider";
-import Image from "next/image";
+import { DealVaultLoader } from "@/components/ui/dealvault-loader";
 
 export default function DashboardLayout({
   children,
@@ -32,39 +32,7 @@ export default function DashboardLayout({
   if (status === "loading") {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-5 animate-in fade-in duration-500">
-          {/* Logo with glow ring */}
-          <div className="relative flex items-center justify-center">
-            {/* Outer pulse ring */}
-            <div className="absolute h-28 w-28 rounded-full border-2 border-emerald-500/30 animate-ping" style={{ animationDuration: "2s" }} />
-            {/* Inner glow ring */}
-            <div className="absolute h-24 w-24 rounded-full bg-emerald-500/10 animate-pulse" style={{ animationDuration: "1.5s" }} />
-            {/* Logo with breathing scale */}
-            <Image
-              src="/logo.png"
-              alt="DealVault"
-              width={96}
-              height={96}
-              className="relative z-10"
-              style={{ animation: "breathe 2s ease-in-out infinite" }}
-            />
-          </div>
-          {/* Animated loading text */}
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <span>Loading DealVault</span>
-            <span className="flex gap-0.5">
-              <span className="animate-bounce" style={{ animationDelay: "0ms", animationDuration: "1s" }}>.</span>
-              <span className="animate-bounce" style={{ animationDelay: "150ms", animationDuration: "1s" }}>.</span>
-              <span className="animate-bounce" style={{ animationDelay: "300ms", animationDuration: "1s" }}>.</span>
-            </span>
-          </div>
-        </div>
-        <style jsx>{`
-          @keyframes breathe {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.06); }
-          }
-        `}</style>
+        <DealVaultLoader />
       </div>
     );
   }
