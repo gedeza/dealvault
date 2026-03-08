@@ -441,7 +441,7 @@ model CustodyConfirmation {
 
 model Subscription {
   id                 String    @id @default(cuid())
-  tier               String    @default("free") // free, pro, enterprise
+  tier               String    @default("prospect") // prospect, reef, sovereign, vault
   status             String    @default("active") // active, past_due, cancelled, trialing
   stripeCustomerId   String?   @unique
   stripeSubscriptionId String? @unique

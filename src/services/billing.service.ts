@@ -1,12 +1,13 @@
 /**
  * Billing Service — Stripe subscription management.
  *
- * Tier definitions:
- *   free     — No limits (default for all users)
- *   pro      — AI features, real-time updates, advanced reporting
- *   enterprise — Custom, white-label, dedicated support
+ * Tier definitions (mining-heritage naming from REVENUE-MODEL.md):
+ *   prospect   — Entry tier: 5 deals, 3 users, 5 GB, up to $2M
+ *   reef       — Hero tier: 20 deals, 10 users, 25 GB, escrow workflow
+ *   sovereign  — Premium: 75 deals, 30 users, 100 GB, chain of custody
+ *   vault      — Enterprise: unlimited, custom, sales-led
  *
- * Environment: STRIPE_SECRET_KEY, STRIPE_PRO_PRICE_ID, STRIPE_WEBHOOK_SECRET
+ * Environment: STRIPE_SECRET_KEY, STRIPE_REEF_PRICE_ID, STRIPE_SOVEREIGN_PRICE_ID, STRIPE_WEBHOOK_SECRET
  */
 
 import Stripe from "stripe";
@@ -19,43 +20,77 @@ function getStripe(): Stripe | null {
   return new Stripe(key, { apiVersion: "2026-02-25.clover" });
 }
 
-export type SubscriptionTier = "free" | "pro" | "enterprise";
+export type SubscriptionTier = "prospect" | "reef" | "sovereign" | "vault";
 
 export interface TierLimits {
   maxActiveDeals: number;
   maxSeats: number;
+  maxPartiesPerDeal: number;
   storageGB: number;
-  aiFeatures: boolean;
-  realtimeSSE: boolean;
+  dealValueCap: number | null; // null = unlimited
+  escrowWorkflow: boolean;
+  chainOfCustody: boolean;
+  apiAccess: boolean;
+  apiDailyLimit: number | null;
+  complianceReporting: boolean;
   advancedReporting: boolean;
   webhooks: boolean;
 }
 
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
-  free: {
-    maxActiveDeals: 999,
-    maxSeats: 999,
+  prospect: {
+    maxActiveDeals: 5,
+    maxSeats: 3,
+    maxPartiesPerDeal: 6,
     storageGB: 5,
-    aiFeatures: false,
-    realtimeSSE: true,
+    dealValueCap: 2_000_000,
+    escrowWorkflow: false,
+    chainOfCustody: false,
+    apiAccess: false,
+    apiDailyLimit: null,
+    complianceReporting: false,
     advancedReporting: false,
     webhooks: false,
   },
-  pro: {
-    maxActiveDeals: 999,
-    maxSeats: 999,
-    storageGB: 100,
-    aiFeatures: true,
-    realtimeSSE: true,
+  reef: {
+    maxActiveDeals: 20,
+    maxSeats: 10,
+    maxPartiesPerDeal: 12,
+    storageGB: 25,
+    dealValueCap: 15_000_000,
+    escrowWorkflow: true,
+    chainOfCustody: false,
+    apiAccess: false,
+    apiDailyLimit: null,
+    complianceReporting: false,
     advancedReporting: true,
     webhooks: true,
   },
-  enterprise: {
+  sovereign: {
+    maxActiveDeals: 75,
+    maxSeats: 30,
+    maxPartiesPerDeal: 999,
+    storageGB: 100,
+    dealValueCap: 50_000_000,
+    escrowWorkflow: true,
+    chainOfCustody: true,
+    apiAccess: true,
+    apiDailyLimit: 10_000,
+    complianceReporting: true,
+    advancedReporting: true,
+    webhooks: true,
+  },
+  vault: {
     maxActiveDeals: 999,
     maxSeats: 999,
+    maxPartiesPerDeal: 999,
     storageGB: 1000,
-    aiFeatures: true,
-    realtimeSSE: true,
+    dealValueCap: null,
+    escrowWorkflow: true,
+    chainOfCustody: true,
+    apiAccess: true,
+    apiDailyLimit: null,
+    complianceReporting: true,
     advancedReporting: true,
     webhooks: true,
   },
@@ -63,11 +98,11 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
 
 export async function getUserTier(userId: string): Promise<SubscriptionTier> {
   const sub = await prisma.subscription.findUnique({ where: { userId } });
-  if (!sub || sub.status === "cancelled") return "free";
+  if (!sub || sub.status === "cancelled") return "prospect";
   if (sub.status === "active" || sub.status === "trialing") {
     return sub.tier as SubscriptionTier;
   }
-  return "free";
+  return "prospect";
 }
 
 export async function getUserLimits(userId: string): Promise<TierLimits> {
@@ -85,9 +120,9 @@ export async function createCheckoutSession(
     return null;
   }
 
-  const priceId = process.env.STRIPE_PRO_PRICE_ID;
+  const priceId = process.env.STRIPE_REEF_PRICE_ID || process.env.STRIPE_PRO_PRICE_ID;
   if (!priceId) {
-    logger.warn("[Billing] STRIPE_PRO_PRICE_ID not set");
+    logger.warn("[Billing] STRIPE_REEF_PRICE_ID not set");
     return null;
   }
 
@@ -106,7 +141,7 @@ export async function createCheckoutSession(
       sub = await prisma.subscription.create({
         data: {
           userId,
-          tier: "free",
+          tier: "prospect",
           status: "active",
           stripeCustomerId: customerId,
         },
@@ -177,18 +212,18 @@ export async function handleStripeWebhook(
           where: { userId },
           create: {
             userId,
-            tier: "pro",
+            tier: "reef",
             status: "active",
             stripeCustomerId: session.customer as string,
             stripeSubscriptionId: session.subscription as string,
           },
           update: {
-            tier: "pro",
+            tier: "reef",
             status: "active",
             stripeSubscriptionId: session.subscription as string,
           },
         });
-        logger.info("[Billing] Subscription activated", { userId, tier: "pro" });
+        logger.info("[Billing] Subscription activated", { userId, tier: "reef" });
       }
       break;
     }
@@ -219,7 +254,7 @@ export async function handleStripeWebhook(
       const subscription = event.data.object as Stripe.Subscription;
       await prisma.subscription.updateMany({
         where: { stripeSubscriptionId: subscription.id },
-        data: { status: "cancelled", tier: "free", cancelledAt: new Date() },
+        data: { status: "cancelled", tier: "prospect", cancelledAt: new Date() },
       });
       logger.info("[Billing] Subscription cancelled", { stripeSubId: subscription.id });
       break;

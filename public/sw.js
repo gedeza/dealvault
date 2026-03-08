@@ -1,8 +1,8 @@
 const CACHE_NAME = "dealvault-v1";
-const OFFLINE_URL = "/offline.html";
+const OFFLINE_URL = "/offline-fallback.html";
 
 const PRECACHE_ASSETS = [
-  "/offline.html",
+  "/offline-fallback.html",
   "/logo.png",
 ];
 

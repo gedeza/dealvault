@@ -19,7 +19,7 @@
 | 5.2 | Database indexes for performance | DONE | Indexes on all foreign keys, status, commodity, timestamps |
 | 5.3 | Input sanitization on all API routes | DONE | `src/lib/sanitize.ts` — HTML stripping, trimming; applied to deals, messages, companies, profile, register |
 | 5.4 | Delete confirmation dialogs | DONE | Companies page delete uses `confirm()` before API call |
-| 5.5 | CSRF protection review | DONE | All mutating routes check `getServerSession`; rate limiting on auth endpoints |
+| 5.5 | CSRF protection + rate limiting | DONE | All mutating routes check `getServerSession`; `rateLimit()` wired into register, forgot-password, reset-password, verify-2fa (10 req/15min) |
 
 ## Phase 6: New Features
 | # | Task | Status | Notes |
@@ -124,7 +124,7 @@ _Source: Feature coverage audit conducted 2026-03-08. See `docs/FEATURE-AUDIT.md
 |---|------|--------|-------|
 | 14.1 | Cloudflare R2 object storage | DONE | `src/lib/cloud-storage.ts` — S3-compatible upload/download/delete; `storage.ts` auto-uses R2 when configured, falls back to local; env vars in `.env.example` |
 | 14.2 | Google Cloud Vision + real document intelligence | DONE | `src/services/document-intelligence.service.ts` — Vision API OCR + Claude field extraction pipeline; wired into document upload route; falls back to metadata-only when Vision not configured |
-| 14.3 | Subscription & billing system (Stripe) | DONE | `Subscription` + `Invoice` Prisma models; `billing.service.ts` with Checkout/Portal/Webhook; `/api/billing`, `/api/billing/portal`, `/api/billing/webhook` routes; 3 tiers (free/pro/enterprise); 7-day trial |
+| 14.3 | Subscription & billing system (Stripe) | DONE | `Subscription` + `Invoice` Prisma models; `billing.service.ts` with Checkout/Portal/Webhook; `/api/billing`, `/api/billing/portal`, `/api/billing/webhook` routes; 4 tiers (prospect/reef/sovereign/vault); 7-day trial |
 | 14.4 | SSE scaling with Redis pub/sub | DONE | `src/lib/sse.ts` upgraded with Redis pub/sub broadcast; auto-detects `REDIS_URL`; process-ID dedup prevents double-broadcast; falls back to in-memory when Redis unavailable |
 
 ### 14B: Compliance & Verification
@@ -145,7 +145,7 @@ _Source: Feature coverage audit conducted 2026-03-08. See `docs/FEATURE-AUDIT.md
 ### 14D: Landing Page & Documentation
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 14.12 | Fix landing page accuracy | DONE | Pricing rewritten (Free/Pro/Enterprise); compliance softened to "Designed for"; document intelligence copy fixed; removed fictional trial/trust claims |
+| 14.12 | Fix landing page accuracy | DONE | Pricing rewritten to 4-tier model (Prospect/Reef/Sovereign/Vault) from REVENUE-MODEL.md; monthly/annual toggle; competitive intel removed; compliance softened to "Designed for" |
 | 14.13 | Dynamic trust metrics on landing page | DONE | `/api/public/stats` endpoint (5min cache); `PlatformMetrics` client component; real deal value, deal count from DB |
 | 14.14 | Feature audit documentation | DONE | `docs/FEATURE-AUDIT.md` — comprehensive gap analysis with 7 findings, landing page accuracy assessment, and prioritized recommendations |
 
