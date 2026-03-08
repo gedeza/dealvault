@@ -124,7 +124,7 @@ _Source: Feature coverage audit conducted 2026-03-08. See `docs/FEATURE-AUDIT.md
 |---|------|--------|-------|
 | 14.1 | Cloudflare R2 object storage | DONE | `src/lib/cloud-storage.ts` — S3-compatible upload/download/delete; `storage.ts` auto-uses R2 when configured, falls back to local; env vars in `.env.example` |
 | 14.2 | Google Cloud Vision + real document intelligence | DONE | `src/services/document-intelligence.service.ts` — Vision API OCR + Claude field extraction pipeline; wired into document upload route; falls back to metadata-only when Vision not configured |
-| 14.3 | Subscription & billing system (Stripe) | DONE | `Subscription` + `Invoice` Prisma models; `billing.service.ts` with Checkout/Portal/Webhook; `/api/billing`, `/api/billing/portal`, `/api/billing/webhook` routes; 4 tiers (prospect/reef/sovereign/vault); 7-day trial |
+| 14.3 | Subscription & billing system (Stripe) | DONE | `Subscription` + `Invoice` Prisma models; `billing.service.ts` with Checkout/Portal/Webhook; `/api/billing`, `/api/billing/portal`, `/api/billing/webhook` routes; 4 tiers (prospect/reef/sovereign/vault); 7-day trial; `tier-guard.ts` server-side enforcement on 17 API routes (deal limits, value caps, feature gates); `useTier` hook + `UpgradePrompt` component for client-side gating; `SubscriptionCard` on profile page with usage/limits display; upgrade prompts in deal detail (escrow/custody tabs), reports page, deal creation (value cap) |
 | 14.4 | SSE scaling with Redis pub/sub | DONE | `src/lib/sse.ts` upgraded with Redis pub/sub broadcast; auto-detects `REDIS_URL`; process-ID dedup prevents double-broadcast; falls back to in-memory when Redis unavailable |
 
 ### 14B: Compliance & Verification
