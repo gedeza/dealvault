@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { logTimelineEvent } from "@/services/timeline.service";
 import { sanitizeObject } from "@/lib/sanitize";
 import { requiresTwoFactor, verify2FAToken } from "@/lib/two-factor-gate";
+import { checkDealLimit, checkDealValueCap } from "@/lib/tier-guard";
 
 const createDealSchema = z.object({
   title: z.string().min(3),
@@ -127,6 +128,14 @@ export async function POST(req: Request) {
           { status: 403 }
         );
       }
+    }
+
+    const dealLimitBlock = await checkDealLimit(session.user.id);
+    if (dealLimitBlock) return dealLimitBlock;
+
+    if (data.value) {
+      const valueBlock = await checkDealValueCap(session.user.id, data.value);
+      if (valueBlock) return valueBlock;
     }
 
     // Use transaction to prevent deal number race condition

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
+import { checkFeatureGate } from "@/lib/tier-guard";
 import crypto from "crypto";
 
 const createWebhookSchema = z.object({
@@ -32,6 +33,9 @@ export async function POST(req: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const gate = await checkFeatureGate(session.user.id, "webhooks", "Webhook Integrations", "reef");
+  if (gate) return gate;
 
   try {
     const body = await req.json();

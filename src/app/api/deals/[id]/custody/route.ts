@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { initiateCustodyLog, getFullCustodyLog } from "@/services/custody.service";
 import { CUSTODIAN_TYPES } from "@/types/workflow";
+import { checkFeatureGate } from "@/lib/tier-guard";
 
 // GET /api/deals/[id]/custody — Get full custody chain
 export async function GET(
@@ -59,6 +60,9 @@ export async function POST(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+    const gate = await checkFeatureGate(session.user.id, "chainOfCustody", "Chain of Custody", "sovereign");
+    if (gate) return gate;
 
   const { id } = await params;
 

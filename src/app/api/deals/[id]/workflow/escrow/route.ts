@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { processEscrowAction } from "@/services/workflow.service";
 import { ESCROW_ACTIONS } from "@/types/workflow";
+import { checkFeatureGate } from "@/lib/tier-guard";
 
 // GET /api/deals/[id]/workflow/escrow — Get escrow record
 export async function GET(
@@ -75,6 +76,9 @@ export async function PATCH(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+    const gate = await checkFeatureGate(session.user.id, "escrowWorkflow", "Escrow Workflow", "reef");
+    if (gate) return gate;
 
   const { id } = await params;
 

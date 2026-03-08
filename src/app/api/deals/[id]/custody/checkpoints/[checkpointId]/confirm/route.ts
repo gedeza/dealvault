@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { confirmCheckpoint } from "@/services/custody.service";
+import { checkFeatureGate } from "@/lib/tier-guard";
 
 const confirmSchema = z.object({
   status: z.enum(["confirmed", "disputed"]),
@@ -18,6 +19,9 @@ export async function POST(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+    const gate = await checkFeatureGate(session.user.id, "chainOfCustody", "Chain of Custody", "sovereign");
+    if (gate) return gate;
 
   const { id, checkpointId } = await params;
 

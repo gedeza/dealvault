@@ -7,6 +7,7 @@ import { logTimelineEvent } from "@/services/timeline.service";
 import { createNotification } from "@/services/notification.service";
 import { broadcastToDeal } from "@/lib/sse";
 import { sendDealEventEmail } from "@/services/email.service";
+import { checkPartyLimit } from "@/lib/tier-guard";
 
 const addPartySchema = z.object({
   email: z.string().email(),
@@ -80,6 +81,9 @@ export async function POST(
   if (deal.creatorId !== session.user.id) {
     return NextResponse.json({ error: "Only deal creator can invite parties" }, { status: 403 });
   }
+
+  const partyBlock = await checkPartyLimit(session.user.id, id);
+  if (partyBlock) return partyBlock;
 
   try {
     const body = await req.json();

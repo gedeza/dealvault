@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { checkFeatureGate } from "@/lib/tier-guard";
 import {
   getDealCompliance,
   initializeComplianceForDeal,
@@ -17,6 +18,9 @@ export async function GET(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const gate = await checkFeatureGate(session.user.id, "complianceReporting", "Compliance Reporting", "sovereign");
+  if (gate) return gate;
 
   const { id } = await params;
 
@@ -51,6 +55,9 @@ export async function PATCH(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const gate = await checkFeatureGate(session.user.id, "complianceReporting", "Compliance Reporting", "sovereign");
+  if (gate) return gate;
 
   const { id } = await params;
 

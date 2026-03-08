@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { submitCheckpointEvidence } from "@/services/custody.service";
+import { checkFeatureGate } from "@/lib/tier-guard";
 
 // GET /api/deals/[id]/custody/checkpoints/[checkpointId] — Get checkpoint detail
 export async function GET(
@@ -77,6 +78,9 @@ export async function PATCH(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+    const gate = await checkFeatureGate(session.user.id, "chainOfCustody", "Chain of Custody", "sovereign");
+    if (gate) return gate;
 
   const { id, checkpointId } = await params;
 

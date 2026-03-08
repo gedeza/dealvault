@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
+import { checkFeatureGate } from "@/lib/tier-guard";
 import { dispatchWebhooks } from "@/services/webhook.service";
 
 // POST /api/webhooks/[id]/test — Send a test webhook
@@ -13,6 +14,9 @@ export async function POST(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const gate = await checkFeatureGate(session.user.id, "webhooks", "Webhook Integrations", "reef");
+  if (gate) return gate;
 
   const { id } = await params;
 

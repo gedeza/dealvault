@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { checkFeatureGate } from "@/lib/tier-guard";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const gate = await checkFeatureGate(session.user.id, "advancedReporting", "Advanced Reporting", "reef");
+  if (gate) return gate;
 
   const { searchParams } = new URL(req.url);
   const range = searchParams.get("range") || "12m";

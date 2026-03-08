@@ -15,6 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { User, Lock, Handshake, Building2, Calendar, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { SubscriptionCard } from "@/components/billing/subscription-card";
 
 interface Profile {
   id: string;
@@ -273,6 +274,9 @@ export default function ProfilePage() {
 
       {/* Two-Factor Authentication */}
       <TwoFactorSettings enabled={profile.twoFactorEnabled} />
+
+      {/* Subscription & Billing */}
+      <SubscriptionCard />
     </div>
   );
 }

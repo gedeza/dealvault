@@ -8,6 +8,7 @@ import { broadcastToDeal } from "@/lib/sse";
 import { sendDealEventEmail } from "@/services/email.service";
 import { analyzeDocument } from "@/services/document-intelligence.service";
 import { logger } from "@/lib/logger";
+import { checkStorageLimit } from "@/lib/tier-guard";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -53,6 +54,9 @@ export async function POST(req: Request) {
     if (!party && deal.creatorId !== session.user.id) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
+
+    const storageBlock = await checkStorageLimit(session.user.id, file.size);
+    if (storageBlock) return storageBlock;
 
     const { filePath, sha256Hash, fileSize } = await saveFile(file, dealId, fileBuffer);
 

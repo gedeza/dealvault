@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
+import { checkFeatureGate } from "@/lib/tier-guard";
 
 // DELETE /api/webhooks/[id] — Delete a webhook
 export async function DELETE(
@@ -12,6 +13,9 @@ export async function DELETE(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const gate = await checkFeatureGate(session.user.id, "webhooks", "Webhook Integrations", "reef");
+  if (gate) return gate;
 
   const { id } = await params;
 
@@ -33,6 +37,9 @@ export async function PATCH(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const gate = await checkFeatureGate(session.user.id, "webhooks", "Webhook Integrations", "reef");
+  if (gate) return gate;
 
   const { id } = await params;
 

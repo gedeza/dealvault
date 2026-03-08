@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { validateFile, validateFileBytes, saveFile } from "@/lib/storage";
 import { getUserWorkflowRole } from "@/services/workflow.service";
+import { checkFeatureGate } from "@/lib/tier-guard";
 import path from "path";
 
 const ALLOWED_IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp"];
@@ -22,6 +23,9 @@ export async function POST(
   }
 
   const { id, checkpointId } = await params;
+
+    const gate = await checkFeatureGate(session.user.id, "chainOfCustody", "Chain of Custody", "sovereign");
+    if (gate) return gate;
 
   // Verify user is a deal party
   const role = await getUserWorkflowRole(session.user.id, id);
