@@ -124,7 +124,10 @@ export default function ReportsPage() {
   useEffect(() => {
     setLoading(true);
     fetch(`/api/reports?range=${range}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`${res.status}`);
+        return res.json();
+      })
       .then((d) => {
         setData(d);
         setLoading(false);
@@ -132,7 +135,7 @@ export default function ReportsPage() {
       .catch(() => setLoading(false));
   }, [range]);
 
-  const cumulativeCommissions = data?.monthlyTrend.reduce<{ month: string; total: number }[]>((acc, item) => {
+  const cumulativeCommissions = data?.monthlyTrend?.reduce<{ month: string; total: number }[]>((acc, item) => {
     const prev = acc.length > 0 ? acc[acc.length - 1].total : 0;
     acc.push({ month: formatMonth(item.month), total: prev + item.commissions });
     return acc;
