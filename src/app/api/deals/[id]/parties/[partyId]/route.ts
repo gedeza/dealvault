@@ -48,11 +48,13 @@ export async function PATCH(
     const body = await req.json();
     const { action, companyId } = updatePartySchema.parse(body);
 
+    let companyVerified = false;
     if (companyId) {
       const company = await prisma.company.findUnique({ where: { id: companyId } });
       if (!company || company.userId !== session.user.id) {
         return NextResponse.json({ error: "Company not found" }, { status: 404 });
       }
+      companyVerified = company.verified;
     }
 
     if (action === "accept") {
@@ -62,6 +64,7 @@ export async function PATCH(
           status: "accepted",
           acceptedAt: new Date(),
           ...(companyId && { companyId }),
+          ...(companyVerified && { verifiedAt: new Date() }),
         },
         include: {
           user: { select: { id: true, name: true, email: true } },

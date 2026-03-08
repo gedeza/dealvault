@@ -1,6 +1,8 @@
 import { createHash } from "crypto";
 import { writeFile, mkdir, readFile } from "fs/promises";
 import path from "path";
+import { isR2Enabled, uploadToR2 } from "@/lib/cloud-storage";
+import { logger } from "@/lib/logger";
 
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 
@@ -17,12 +19,16 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "text/plain",
   "text/csv",
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
 ]);
 
 const ALLOWED_EXTENSIONS = new Set([
   ".pdf", ".jpg", ".jpeg", ".png", ".webp",
   ".doc", ".docx", ".xls", ".xlsx",
   ".txt", ".csv",
+  ".mp4", ".mov", ".webm",
 ]);
 
 // Magic byte signatures for server-side MIME validation
@@ -33,6 +39,8 @@ const MAGIC_BYTES: { mime: string; bytes: number[]; offset?: number }[] = [
   { mime: "image/webp", bytes: [0x52, 0x49, 0x46, 0x46], offset: 0 }, // RIFF + WEBP at offset 8
   { mime: "application/msword", bytes: [0xD0, 0xCF, 0x11, 0xE0] }, // OLE2 (doc/xls)
   { mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", bytes: [0x50, 0x4B, 0x03, 0x04] }, // ZIP (docx/xlsx)
+  { mime: "video/mp4", bytes: [0x00, 0x00, 0x00], offset: 0 }, // ftyp box (offset 4 = "ftyp")
+  { mime: "video/webm", bytes: [0x1A, 0x45, 0xDF, 0xA3] }, // EBML/WebM
 ];
 
 function detectMimeFromBytes(buffer: Buffer): string | null {
@@ -45,6 +53,13 @@ function detectMimeFromBytes(buffer: Buffer): string | null {
       if (sig.mime === "image/webp") {
         if (buffer.length >= 12 && buffer.toString("ascii", 8, 12) === "WEBP") {
           return "image/webp";
+        }
+        continue;
+      }
+      // For MP4/MOV, verify "ftyp" at offset 4
+      if (sig.mime === "video/mp4") {
+        if (buffer.length >= 8 && buffer.toString("ascii", 4, 8) === "ftyp") {
+          return "video/mp4";
         }
         continue;
       }
@@ -93,6 +108,8 @@ export function validateFileBytes(buffer: Buffer, ext: string): string | null {
     "image/jpeg": [".jpg", ".jpeg"],
     "image/png": [".png"],
     "image/webp": [".webp"],
+    "video/mp4": [".mp4", ".mov"],
+    "video/webm": [".webm"],
   };
 
   const expectedExts = mimeToExt[detected];
@@ -108,15 +125,31 @@ export async function saveFile(
   dealId: string,
   preloadedBuffer?: Buffer
 ): Promise<{ filePath: string; sha256Hash: string; fileSize: number }> {
-  const dealDir = path.join(UPLOAD_DIR, dealId);
-  await mkdir(dealDir, { recursive: true });
-
   const buffer = preloadedBuffer ?? Buffer.from(await file.arrayBuffer());
   const sha256Hash = createHash("sha256").update(buffer).digest("hex");
   const ext = path.extname(file.name).toLowerCase();
   const fileName = `${sha256Hash}${ext}`;
-  const filePath = path.join(dealDir, fileName);
 
+  // Use R2 cloud storage when configured
+  if (isR2Enabled()) {
+    try {
+      const key = `${dealId}/${fileName}`;
+      const contentType = file.type || "application/octet-stream";
+      const result = await uploadToR2(buffer, key, contentType);
+      return {
+        filePath: result.url,
+        sha256Hash: result.sha256Hash,
+        fileSize: result.fileSize,
+      };
+    } catch (err) {
+      logger.error("[Storage] R2 upload failed, falling back to local", { error: String(err) });
+    }
+  }
+
+  // Local filesystem fallback
+  const dealDir = path.join(UPLOAD_DIR, dealId);
+  await mkdir(dealDir, { recursive: true });
+  const filePath = path.join(dealDir, fileName);
   await writeFile(filePath, buffer);
 
   return {

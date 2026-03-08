@@ -6,7 +6,7 @@ import { saveFile, validateFile, validateFileBytes } from "@/lib/storage";
 import { logTimelineEvent } from "@/services/timeline.service";
 import { broadcastToDeal } from "@/lib/sse";
 import { sendDealEventEmail } from "@/services/email.service";
-import { extractDocumentFields } from "@/services/ai.service";
+import { analyzeDocument } from "@/services/document-intelligence.service";
 import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
@@ -97,13 +97,14 @@ export async function POST(req: Request) {
       detail: `Uploaded document "${file.name}" (${type})`,
     });
 
-    // AI: extract document fields in background (non-blocking)
-    if (process.env.ANTHROPIC_API_KEY) {
+    // AI + OCR: analyze document in background (non-blocking)
+    if (process.env.ANTHROPIC_API_KEY || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
       const parties = await prisma.dealParty.findMany({
         where: { dealId },
         include: { user: { select: { name: true } } },
       });
-      extractDocumentFields({
+      analyzeDocument({
+        filePath,
         documentName: file.name,
         documentType: type,
         dealCommodity: deal.commodity,
@@ -111,14 +112,15 @@ export async function POST(req: Request) {
         existingParties: parties.map((p) => p.user.name || "Unknown"),
       })
         .then((result) => {
-          logger.info("[AI] Document fields extracted", {
+          logger.info("[DocIntel] Document analyzed", {
             documentId: document.id,
             fields: result.extractedFields,
             confidence: result.confidence,
+            hasOcr: !!result.ocrText,
           });
         })
         .catch((err) => {
-          logger.error("[AI] Document field extraction failed", { error: String(err) });
+          logger.error("[DocIntel] Document analysis failed", { error: String(err) });
         });
     }
 

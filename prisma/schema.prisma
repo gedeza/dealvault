@@ -44,6 +44,10 @@ model User {
   custodyReleased          CustodyLog[]              @relation("CustodyReleasedTo")
   checkpointsSubmitted     CustodyCheckpoint[]       @relation("CheckpointSubmitter")
   checkpointsConfirmed     CustodyConfirmation[]     @relation("CheckpointConfirmer")
+
+  // Subscription & webhook relations
+  subscription             Subscription?
+  webhooks                 Webhook[]
 }
 
 model PasswordReset {
@@ -90,6 +94,7 @@ model Company {
   userId             String
   user               User     @relation(fields: [userId], references: [id])
   dealParties        DealParty[]
+  verificationRequests VerificationRequest[]
 
   @@index([userId])
 }
@@ -126,6 +131,7 @@ model Deal {
   commissionLedger CommissionLedger[]
   workflow         DealWorkflow?
   custodyLog       CustodyLog?
+  compliance       ComplianceChecklist[]
 }
 
 model DealParty {
@@ -427,4 +433,132 @@ model CustodyConfirmation {
 
   @@unique([checkpointId, confirmedByUserId])
   @@index([checkpointId])
+}
+
+// ============================================================================
+// Subscription & Billing Models (Stripe)
+// ============================================================================
+
+model Subscription {
+  id                 String    @id @default(cuid())
+  tier               String    @default("free") // free, pro, enterprise
+  status             String    @default("active") // active, past_due, cancelled, trialing
+  stripeCustomerId   String?   @unique
+  stripeSubscriptionId String? @unique
+  stripePriceId      String?
+  trialEndsAt        DateTime?
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelledAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id])
+
+  invoices           Invoice[]
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+  @@index([status])
+}
+
+model Invoice {
+  id               String    @id @default(cuid())
+  stripeInvoiceId  String?   @unique
+  amount           Float
+  currency         String    @default("USD")
+  status           String    @default("pending") // pending, paid, failed, void
+  paidAt           DateTime?
+  invoiceUrl       String?
+  createdAt        DateTime  @default(now())
+
+  subscriptionId   String
+  subscription     Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([subscriptionId])
+  @@index([status])
+}
+
+// ============================================================================
+// Compliance Models
+// ============================================================================
+
+model ComplianceChecklist {
+  id                String    @id @default(cuid())
+  framework         String    // sadpmr, fica_aml, kimberley_process, lbma
+  status            String    @default("pending") // pending, in_progress, compliant, non_compliant
+  completedAt       DateTime?
+  reviewedByUserId  String?
+  reviewNotes       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  dealId            String
+  deal              Deal      @relation(fields: [dealId], references: [id])
+
+  items             ComplianceItem[]
+
+  @@unique([dealId, framework])
+  @@index([dealId])
+  @@index([status])
+}
+
+model ComplianceItem {
+  id              String    @id @default(cuid())
+  requirement     String
+  description     String
+  status          String    @default("pending") // pending, met, not_met, na
+  evidenceNote    String?
+  documentId      String?   // optional link to uploaded document as evidence
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  checklistId     String
+  checklist       ComplianceChecklist @relation(fields: [checklistId], references: [id])
+
+  @@index([checklistId])
+}
+
+// ============================================================================
+// Company Verification
+// ============================================================================
+
+model VerificationRequest {
+  id              String    @id @default(cuid())
+  status          String    @default("pending") // pending, approved, rejected
+  documentIds     String?   // comma-separated document IDs (KYC docs)
+  reviewedByUserId String?
+  reviewNotes     String?
+  requestedAt     DateTime  @default(now())
+  reviewedAt      DateTime?
+
+  companyId       String
+  company         Company   @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@index([status])
+}
+
+// ============================================================================
+// Webhook Integration
+// ============================================================================
+
+model Webhook {
+  id           String    @id @default(cuid())
+  url          String
+  platform     String    // slack, teams, custom
+  events       String    // comma-separated event types
+  secret       String?
+  active       Boolean   @default(true)
+  lastFiredAt  DateTime?
+  failCount    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([active])
 }

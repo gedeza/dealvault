@@ -24,6 +24,7 @@ import {
   Radio,
   FileSearch,
 } from "lucide-react";
+import { PlatformMetrics } from "@/components/landing/PlatformMetrics";
 
 export default function HomePage() {
   return (
@@ -45,7 +46,7 @@ export default function HomePage() {
               <Button variant="ghost">Sign In</Button>
             </Link>
             <Link href="/register">
-              <Button>Start Free Trial</Button>
+              <Button>Get Started Free</Button>
             </Link>
           </div>
         </div>
@@ -57,19 +58,19 @@ export default function HomePage() {
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">
               <Image src="/logo.png" alt="" width={16} height={16} />
-              Trusted by commodity traders across Southern Africa
+              Secure commodity deal rooms for Southern Africa
             </div>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               Secure Deal Rooms for
               <span className="text-emerald-600"> High-Value</span> Commodity Trades
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              The only platform that combines deal management, escrow workflow, and chain of custody tracking for gold, diamond, platinum, and tanzanite transactions. Replace costly Letters of Credit with a platform that costs 85% less.
+              The only platform that combines deal management, escrow workflow, and chain of custody tracking for gold, diamond, platinum, and tanzanite transactions.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
               <Link href="/register">
                 <Button size="lg" className="gap-2 w-full sm:w-auto">
-                  Start 7-Day Free Trial
+                  Get Started Free
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -80,24 +81,12 @@ export default function HomePage() {
               </a>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              No credit card required. Full Reef tier access for 7 days.
+              No credit card required. Full access to all features.
             </p>
           </div>
 
-          {/* Trust metrics */}
-          <div className="mx-auto mt-16 grid max-w-3xl grid-cols-2 gap-8 md:grid-cols-4">
-            {[
-              { value: "85%", label: "Cheaper than LCs" },
-              { value: "$50M+", label: "Deals supported" },
-              { value: "6-Phase", label: "Escrow workflow" },
-              { value: "5-Point", label: "Custody chain" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl font-bold text-emerald-600">{stat.value}</div>
-                <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </div>
+          {/* Dynamic trust metrics */}
+          <PlatformMetrics />
         </section>
 
         {/* Problem Statement */}
@@ -106,7 +95,7 @@ export default function HomePage() {
             <div className="mx-auto max-w-3xl text-center">
               <h2 className="text-2xl font-bold sm:text-3xl">The Problem with Commodity Trading Today</h2>
               <p className="mt-4 text-muted-foreground">
-                African commodity trades worth billions are managed through WhatsApp, email, and paper trails. The result? R21-70 billion lost annually to fraud, no audit trails, and Letters of Credit that cost 3-10% of deal value.
+                African commodity trades worth billions are managed through WhatsApp, email, and paper trails. The result? Billions lost annually to fraud, no audit trails, and Letters of Credit that cost 3-10% of deal value.
               </p>
             </div>
             <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-3">
@@ -139,17 +128,17 @@ export default function HomePage() {
               { icon: FileCheck, title: "Document Management", desc: "Upload SPA, NCNDA, IMFPA, BCL, POF with visibility controls — deal-wide, side-only, or private." },
               { icon: Users, title: "Multi-Party Coordination", desc: "Manage sellers, buyers, mandates, and intermediaries with side-based confidentiality controls." },
               { icon: Banknote, title: "Escrow Workflow", desc: "6-phase state machine: listing, documentation, buyer review, testing, fund blocking, and release." },
-              { icon: Link2, title: "Chain of Custody", desc: "5-point tracking with GPS, photo evidence, seal verification, and dual-party confirmation at every checkpoint." },
+              { icon: Link2, title: "Chain of Custody", desc: "5-point tracking with GPS, photo & video evidence, seal verification, and dual-party confirmation at every checkpoint." },
               { icon: FlaskConical, title: "Testing & Verification", desc: "Record assay results, inspector details, and link certificates. Intermediary-managed, visible to all parties." },
               { icon: MapPin, title: "GPS Evidence", desc: "Capture geotagged photos at each checkpoint. SHA-256 hashing ensures photos are tamper-proof." },
-              { icon: Globe, title: "Compliance Ready", desc: "Built for SADPMR, FICA/AML, Kimberley Process, and LBMA chain of integrity requirements." },
+              { icon: Globe, title: "Designed for Compliance", desc: "Audit trails, chain of custody records, and document management designed to support SADPMR, FICA/AML, and Kimberley Process requirements." },
               { icon: Shield, title: "Weight Variance Detection", desc: "Automatic alerts when commodity weight differs by more than 0.01% between checkpoints." },
               { icon: Bot, title: "AI Deal Room Assistant", desc: "Ask questions about deal status, timeline, and next steps. Powered by Claude AI with full deal context." },
               { icon: ShieldAlert, title: "AI Risk Scoring", desc: "Automated risk assessment analyzes deal value, party verification, document completeness, and flags concerns." },
               { icon: ScanSearch, title: "Anomaly Detection", desc: "AI scans for suspicious patterns — weight variances, unusual deal velocity, commission outliers, and new accounts." },
               { icon: Radio, title: "Real-Time Updates", desc: "Live deal room updates via Server-Sent Events. See messages, status changes, and document uploads instantly." },
               { icon: Bell, title: "Email Notifications", desc: "Transactional emails for party invitations, status changes, and document uploads. Never miss a deal update." },
-              { icon: FileSearch, title: "Document Intelligence", desc: "AI automatically extracts key fields from uploaded contracts and certificates to speed up deal processing." },
+              { icon: FileSearch, title: "Document Intelligence", desc: "AI analyzes uploaded document metadata to suggest relevant deal fields and streamline processing." },
             ].map((feature) => (
               <div key={feature.title} className="rounded-lg border p-6 hover:border-emerald-200 hover:shadow-sm transition-all dark:hover:border-emerald-800">
                 <feature.icon className="h-7 w-7 text-emerald-600 mb-3" />
@@ -213,7 +202,7 @@ export default function HomePage() {
                 <ul className="mt-6 space-y-3">
                   {[
                     "Tamper-evident seal ID tracking from origin to delivery",
-                    "GPS-tagged photo evidence at every checkpoint",
+                    "GPS-tagged photo & video evidence at every checkpoint",
                     "Weight variance auto-detection (>0.01% threshold)",
                     "Dual-party confirmation — both buyer and seller must verify",
                     "Fund release blocked until all checkpoints are verified",
@@ -265,31 +254,31 @@ export default function HomePage() {
         <section id="pricing" className="border-y bg-muted/30">
           <div className="container mx-auto px-4 py-20">
             <div className="mx-auto max-w-3xl text-center">
-              <h2 className="text-2xl font-bold sm:text-3xl">Pricing That Scales with Your Deals</h2>
+              <h2 className="text-2xl font-bold sm:text-3xl">Simple, Transparent Pricing</h2>
               <p className="mt-4 text-muted-foreground">
-                Subscription + small transaction fee at settlement. Still 85% cheaper than traditional Letters of Credit.
+                Start free. Upgrade as your trading volume grows. Tiered plans coming soon.
               </p>
             </div>
-            <div className="mx-auto mt-12 grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {/* Prospect */}
+            <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-3">
+              {/* Free */}
               <div className="rounded-xl border bg-background p-6">
-                <h3 className="text-lg font-bold">Prospect</h3>
+                <h3 className="text-lg font-bold">Free</h3>
                 <p className="text-xs text-muted-foreground mt-1">Individual brokers & small traders</p>
                 <div className="mt-4">
-                  <span className="text-3xl font-bold">$249</span>
+                  <span className="text-3xl font-bold">$0</span>
                   <span className="text-muted-foreground">/mo</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Billed annually. $299/mo monthly.</p>
+                <p className="text-xs text-muted-foreground">No credit card required</p>
                 <ul className="mt-6 space-y-2.5">
                   {[
-                    "5 active deals",
-                    "3 user seats",
-                    "5 GB document storage",
                     "Deal rooms & status tracking",
                     "Document management + SHA-256",
+                    "Multi-party coordination",
                     "Deal-level messaging",
                     "Email notifications",
-                    "Basic commission tracking",
+                    "Commission tracking",
+                    "Escrow workflow (6-phase)",
+                    "Chain of custody tracking",
                   ].map((f) => (
                     <li key={f} className="flex gap-2 text-sm">
                       <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
@@ -302,66 +291,28 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              {/* Reef — Hero Tier */}
+              {/* Pro — Hero Tier */}
               <div className="rounded-xl border-2 border-emerald-500 bg-background p-6 relative">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-medium px-3 py-1 rounded-full">
                   Most Popular
                 </div>
-                <h3 className="text-lg font-bold">Reef</h3>
+                <h3 className="text-lg font-bold">Pro</h3>
                 <p className="text-xs text-muted-foreground mt-1">Established firms & trading houses</p>
                 <div className="mt-4">
-                  <span className="text-3xl font-bold">$749</span>
-                  <span className="text-muted-foreground">/mo</span>
+                  <span className="text-3xl font-bold">Coming Soon</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Billed annually. $899/mo monthly.</p>
+                <p className="text-xs text-muted-foreground">Priority access for early adopters</p>
                 <ul className="mt-6 space-y-2.5">
                   {[
-                    "20 active deals",
-                    "10 user seats",
-                    "25 GB storage",
-                    "Everything in Prospect",
-                    "Side & private messaging",
-                    "Escrow workflow (6-phase)",
-                    "Fund blocking & release",
-                    "Verification management",
-                    "Real-time deal room updates",
-                    "Full commission CRUD",
-                    "Audit log export (CSV)",
-                  ].map((f) => (
-                    <li key={f} className="flex gap-2 text-sm">
-                      <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/register" className="block mt-6">
-                  <Button className="w-full">Start 7-Day Free Trial</Button>
-                </Link>
-              </div>
-
-              {/* Sovereign */}
-              <div className="rounded-xl border bg-background p-6">
-                <h3 className="text-lg font-bold">Sovereign</h3>
-                <p className="text-xs text-muted-foreground mt-1">Large trading houses & mining companies</p>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold">$1,499</span>
-                  <span className="text-muted-foreground">/mo</span>
-                </div>
-                <p className="text-xs text-muted-foreground">Billed annually. $1,799/mo monthly.</p>
-                <ul className="mt-6 space-y-2.5">
-                  {[
-                    "75 active deals",
-                    "30 user seats",
-                    "100 GB storage",
-                    "Everything in Reef",
-                    "Chain of custody tracking",
-                    "GPS & photo checkpoints",
-                    "Dual-party confirmation",
+                    "Everything in Free",
                     "AI Deal Room Assistant",
-                    "AI Risk Scoring",
-                    "API access (10K req/day)",
-                    "Compliance reporting",
-                    "Phone support + account manager",
+                    "AI Risk Scoring & Anomaly Detection",
+                    "Real-time deal room updates (SSE)",
+                    "Advanced reporting dashboards",
+                    "Multi-currency support (10 currencies)",
+                    "Audit log export (CSV & JSON)",
+                    "Full commission CRUD",
+                    "Priority support",
                   ].map((f) => (
                     <li key={f} className="flex gap-2 text-sm">
                       <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
@@ -370,34 +321,31 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <Link href="/register" className="block mt-6">
-                  <Button variant="outline" className="w-full">Get Started</Button>
+                  <Button className="w-full">Join Waitlist</Button>
                 </Link>
               </div>
 
-              {/* Vault */}
+              {/* Enterprise */}
               <div className="rounded-xl border bg-background p-6">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold">Vault</h3>
+                  <h3 className="text-lg font-bold">Enterprise</h3>
                   <Star className="h-4 w-4 text-amber-500" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Institutions, banks & government</p>
                 <div className="mt-4">
                   <span className="text-3xl font-bold">Custom</span>
                 </div>
-                <p className="text-xs text-muted-foreground">From $3,500/mo. Annual contracts.</p>
+                <p className="text-xs text-muted-foreground">Contact us for pricing</p>
                 <ul className="mt-6 space-y-2.5">
                   {[
-                    "Unlimited deals & users",
-                    "1 TB+ storage",
-                    "Everything in Sovereign",
+                    "Everything in Pro",
                     "White-label / custom branding",
                     "SSO / SAML integration",
                     "Unlimited API + webhooks",
-                    "AI Anomaly Detection",
-                    "Document Intelligence (AI)",
+                    "Document Intelligence (AI OCR)",
                     "Custom workflow phases",
                     "On-premises deployment",
-                    "Dedicated engineer",
+                    "Dedicated account manager",
                     "Custom SLAs (99.9%)",
                   ].map((f) => (
                     <li key={f} className="flex gap-2 text-sm">
@@ -410,15 +358,6 @@ export default function HomePage() {
                   <Button variant="outline" className="w-full">Contact Sales</Button>
                 </Link>
               </div>
-            </div>
-
-            {/* Transaction fee note */}
-            <div className="mx-auto mt-8 max-w-2xl text-center">
-              <p className="text-sm text-muted-foreground">
-                All plans include a small transaction fee at deal settlement (0.15% - 1.00% of deal value, degressive with size).
-                <br />
-                Caps apply per tier. Still 85-93% cheaper than Letters of Credit.
-              </p>
             </div>
           </div>
         </section>
@@ -453,18 +392,18 @@ export default function HomePage() {
               Ready to Secure Your Next Deal?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-emerald-100">
-              Join commodity traders across Southern Africa who trust DealVault to manage high-value transactions with full audit trails and chain of custody verification.
+              Join commodity traders across Southern Africa who use DealVault to manage high-value transactions with full audit trails and chain of custody verification.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
               <Link href="/register">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
-                  Start 7-Day Free Trial
+                  Get Started Free
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
             <p className="mt-4 text-xs text-emerald-200">
-              No credit card required. Full Reef tier access.
+              No credit card required. Full platform access.
             </p>
           </div>
         </section>

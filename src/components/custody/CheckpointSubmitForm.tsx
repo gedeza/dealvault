@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapPin, Loader2, Upload } from "lucide-react";
+import { MapPin, Loader2, Upload, Video } from "lucide-react";
 import { toast } from "sonner";
 
 interface CheckpointSubmitFormProps {
@@ -29,6 +29,7 @@ export function CheckpointSubmitForm({
   const [loading, setLoading] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [form, setForm] = useState({
     latitude: "",
     longitude: "",
@@ -92,6 +93,31 @@ export function CheckpointSubmitForm({
         photoHash = photoData.photoHash;
       }
 
+      // Upload video if provided
+      let videoPath: string | undefined;
+      let videoHash: string | undefined;
+
+      if (videoFile) {
+        const formData = new FormData();
+        formData.append("file", videoFile);
+
+        const videoRes = await fetch(
+          `/api/deals/${dealId}/custody/checkpoints/${checkpointId}/photo`,
+          { method: "POST", body: formData }
+        );
+
+        if (!videoRes.ok) {
+          const data = await videoRes.json();
+          toast.error(data.error || "Failed to upload video");
+          setLoading(false);
+          return;
+        }
+
+        const videoData = await videoRes.json();
+        videoPath = videoData.videoPath;
+        videoHash = videoData.videoHash;
+      }
+
       // Submit evidence
       const payload: Record<string, unknown> = {};
       if (form.latitude) payload.latitude = parseFloat(form.latitude);
@@ -105,6 +131,8 @@ export function CheckpointSubmitForm({
       }
       if (photoPath) payload.photoPath = photoPath;
       if (photoHash) payload.photoHash = photoHash;
+      if (videoPath) payload.videoPath = videoPath;
+      if (videoHash) payload.videoHash = videoHash;
 
       const res = await fetch(
         `/api/deals/${dealId}/custody/checkpoints/${checkpointId}`,
@@ -212,11 +240,25 @@ export function CheckpointSubmitForm({
 
         {/* Photo upload */}
         <div className="sm:col-span-2">
-          <Label className="text-xs">Photo Evidence</Label>
+          <Label className="text-xs flex items-center gap-1">
+            <Upload className="h-3 w-3" /> Photo Evidence
+          </Label>
           <Input
             type="file"
             accept="image/jpeg,image/png,image/webp"
             onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+          />
+        </div>
+
+        {/* Video upload */}
+        <div className="sm:col-span-2">
+          <Label className="text-xs flex items-center gap-1">
+            <Video className="h-3 w-3" /> Video Evidence (optional, max 100MB)
+          </Label>
+          <Input
+            type="file"
+            accept="video/mp4,video/quicktime,video/webm"
+            onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
           />
         </div>
 

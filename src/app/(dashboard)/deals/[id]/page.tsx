@@ -70,6 +70,7 @@ import { EscrowStatusCard } from "@/components/workflow/EscrowStatusCard";
 import { VerificationPanel } from "@/components/workflow/VerificationPanel";
 import { CustodyTracker } from "@/components/custody/CustodyTracker";
 import { InitiateCustodyModal } from "@/components/custody/InitiateCustodyModal";
+import { IntegrityChainViewer } from "@/components/custody/IntegrityChainViewer";
 import { DealAssistant } from "@/components/deal/DealAssistant";
 import { DealRiskBadge } from "@/components/deal/DealRiskBadge";
 import { AnomalyDetector } from "@/components/deal/AnomalyDetector";
@@ -537,13 +538,16 @@ export default function DealRoomPage() {
                 </CardContent>
               </Card>
             ) : (
-              <CustodyTracker
-                dealId={deal.id}
-                custody={custody}
-                userRole={userWorkflowRole}
-                currentUserId={currentUserId || ""}
-                onUpdate={refreshAll}
-              />
+              <>
+                <CustodyTracker
+                  dealId={deal.id}
+                  custody={custody}
+                  userRole={userWorkflowRole}
+                  currentUserId={currentUserId || ""}
+                  onUpdate={refreshAll}
+                />
+                <IntegrityChainViewer dealId={deal.id} />
+              </>
             )}
           </TabsContent>
         )}
