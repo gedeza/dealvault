@@ -578,6 +578,280 @@
         }
       }
     },
+    "/api/deals/{id}/events": {
+      "get": {
+        "tags": ["Real-time"],
+        "summary": "SSE stream for live deal room updates",
+        "description": "Server-Sent Events endpoint. Emits: connected, status_changed, new_message, party_invited, document_uploaded, workflow_updated, custody_updated. Sends heartbeat every 30s.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "SSE event stream", "content": { "text/event-stream": {} } },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Not a party to this deal" }
+        }
+      }
+    },
+    "/api/deals/{id}/assistant": {
+      "post": {
+        "tags": ["AI"],
+        "summary": "Ask the AI Deal Room Assistant a question",
+        "description": "Uses Claude API to answer questions about the deal's status, timeline, parties, and next steps. Requires ANTHROPIC_API_KEY.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["question"],
+                "properties": {
+                  "question": { "type": "string", "maxLength": 2000 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "AI response", "content": { "application/json": { "schema": { "type": "object", "properties": { "answer": { "type": "string" } } } } } },
+          "503": { "description": "AI not configured" }
+        }
+      }
+    },
+    "/api/deals/{id}/risk": {
+      "get": {
+        "tags": ["AI"],
+        "summary": "AI-powered deal risk assessment",
+        "description": "Analyzes deal parameters, parties, documents and returns a risk score with factors. Requires ANTHROPIC_API_KEY.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": {
+            "description": "Risk assessment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+                    "level": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+                    "factors": { "type": "array", "items": { "type": "string" } },
+                    "recommendation": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "503": { "description": "AI not configured" }
+        }
+      }
+    },
+    "/api/deals/{id}/anomalies": {
+      "get": {
+        "tags": ["AI"],
+        "summary": "AI-powered anomaly detection for a deal",
+        "description": "Scans deal for suspicious patterns: weight variances, fast progression, unusual commissions, new accounts on high-value deals, missing docs. Requires ANTHROPIC_API_KEY.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": {
+            "description": "Anomaly scan results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "anomalies": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": { "type": "string" },
+                          "severity": { "type": "string", "enum": ["info", "warning", "critical"] },
+                          "description": { "type": "string" }
+                        }
+                      }
+                    },
+                    "overallRisk": { "type": "string", "enum": ["normal", "elevated", "suspicious"] }
+                  }
+                }
+              }
+            }
+          },
+          "503": { "description": "AI not configured" }
+        }
+      }
+    },
+    "/api/deals/{id}/workflow": {
+      "get": {
+        "tags": ["Workflow"],
+        "summary": "Get deal workflow state",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Workflow with phase, approvals, verification, escrow" }
+        }
+      },
+      "post": {
+        "tags": ["Workflow"],
+        "summary": "Create/activate escrow workflow on a deal",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "201": { "description": "Workflow created" },
+          "409": { "description": "Workflow already exists" }
+        }
+      },
+      "patch": {
+        "tags": ["Workflow"],
+        "summary": "Advance workflow to next phase",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Phase advanced" },
+          "400": { "description": "Gate conditions not met" }
+        }
+      }
+    },
+    "/api/deals/{id}/workflow/approvals": {
+      "post": {
+        "tags": ["Workflow"],
+        "summary": "Submit a phase approval",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["approved"],
+                "properties": {
+                  "approved": { "type": "boolean" },
+                  "notes": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Approval recorded" }
+        }
+      }
+    },
+    "/api/deals/{id}/workflow/escrow": {
+      "patch": {
+        "tags": ["Workflow"],
+        "summary": "Process escrow action (block, confirm, release, refund)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                  "action": { "type": "string", "enum": ["block", "confirm", "release", "refund"] },
+                  "amount": { "type": "number" },
+                  "reference": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Escrow action processed" }
+        }
+      }
+    },
+    "/api/deals/{id}/custody": {
+      "get": {
+        "tags": ["Custody"],
+        "summary": "Get chain of custody log with checkpoints",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Custody log with checkpoints and confirmations" }
+        }
+      },
+      "post": {
+        "tags": ["Custody"],
+        "summary": "Initiate chain of custody tracking",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["startWeight", "startWeightUnit"],
+                "properties": {
+                  "startWeight": { "type": "number" },
+                  "startWeightUnit": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Custody log created with checkpoint stubs" }
+        }
+      }
+    },
+    "/api/deals/{id}/custody/checkpoints/{checkpointId}": {
+      "patch": {
+        "tags": ["Custody"],
+        "summary": "Submit checkpoint evidence (weight, photos, notes)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "checkpointId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Evidence submitted" }
+        }
+      }
+    },
+    "/api/deals/{id}/custody/checkpoints/{checkpointId}/confirm": {
+      "post": {
+        "tags": ["Custody"],
+        "summary": "Confirm or dispute a custody checkpoint",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "checkpointId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["confirmed"],
+                "properties": {
+                  "confirmed": { "type": "boolean" },
+                  "notes": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Confirmation recorded" }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "List all users (admin only)",
+        "responses": {
+          "200": { "description": "Array of users with stats" },
+          "403": { "description": "Admin role required" }
+        }
+      }
+    },
+    "/api/admin/stats": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Platform statistics (admin only)",
+        "responses": {
+          "200": { "description": "User counts, deal counts, volume metrics" },
+          "403": { "description": "Admin role required" }
+        }
+      }
+    },
     "/api/notifications": {
       "get": {
         "tags": ["Notifications"],

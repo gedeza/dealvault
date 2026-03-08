@@ -4,6 +4,10 @@ import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { saveFile, validateFile, validateFileBytes } from "@/lib/storage";
 import { logTimelineEvent } from "@/services/timeline.service";
+import { broadcastToDeal } from "@/lib/sse";
+import { sendDealEventEmail } from "@/services/email.service";
+import { extractDocumentFields } from "@/services/ai.service";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -73,6 +77,50 @@ export async function POST(req: Request) {
       description: `Document "${file.name}" (${type}) uploaded`,
       metadata: { documentId: document.id, type, sha256Hash },
     });
+
+    // SSE: broadcast document upload to deal room
+    broadcastToDeal(dealId, "document_uploaded", {
+      documentId: document.id,
+      name: file.name,
+      type,
+      uploadedBy: session.user.name,
+    }, session.user.id);
+
+    // Email: notify deal parties
+    sendDealEventEmail({
+      dealId,
+      excludeUserId: session.user.id,
+      eventType: "document_uploaded",
+      dealTitle: deal.title,
+      dealNumber: deal.dealNumber,
+      actorName: session.user.name || "A deal member",
+      detail: `Uploaded document "${file.name}" (${type})`,
+    });
+
+    // AI: extract document fields in background (non-blocking)
+    if (process.env.ANTHROPIC_API_KEY) {
+      const parties = await prisma.dealParty.findMany({
+        where: { dealId },
+        include: { user: { select: { name: true } } },
+      });
+      extractDocumentFields({
+        documentName: file.name,
+        documentType: type,
+        dealCommodity: deal.commodity,
+        dealTitle: deal.title,
+        existingParties: parties.map((p) => p.user.name || "Unknown"),
+      })
+        .then((result) => {
+          logger.info("[AI] Document fields extracted", {
+            documentId: document.id,
+            fields: result.extractedFields,
+            confidence: result.confidence,
+          });
+        })
+        .catch((err) => {
+          logger.error("[AI] Document field extraction failed", { error: String(err) });
+        });
+    }
 
     return NextResponse.json(document, { status: 201 });
   } catch {

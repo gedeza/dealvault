@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { logTimelineEvent } from "@/services/timeline.service";
 import { createNotification } from "@/services/notification.service";
+import { broadcastToDeal } from "@/lib/sse";
+import { sendDealEventEmail } from "@/services/email.service";
 
 const addPartySchema = z.object({
   email: z.string().email(),
@@ -142,6 +144,25 @@ export async function POST(
       title: "Deal Invitation",
       message: `You've been invited to "${deal.title}" as ${data.role.replace("_", " ")}`,
       link: `/deals/${id}`,
+    });
+
+    // SSE: broadcast party invite to deal room
+    broadcastToDeal(id, "party_invited", {
+      partyId: party.id,
+      role: data.role,
+      side,
+      user: party.user,
+    });
+
+    // Email: send invite email to invited user
+    sendDealEventEmail({
+      dealId: id,
+      specificUserIds: [user.id],
+      eventType: "party_invited",
+      dealTitle: deal.title,
+      dealNumber: deal.dealNumber,
+      actorName: session.user.name || "The deal creator",
+      detail: `You've been invited as ${data.role.replace("_", " ")}`,
     });
 
     return NextResponse.json(party, { status: 201 });

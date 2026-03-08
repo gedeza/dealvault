@@ -70,6 +70,10 @@ import { EscrowStatusCard } from "@/components/workflow/EscrowStatusCard";
 import { VerificationPanel } from "@/components/workflow/VerificationPanel";
 import { CustodyTracker } from "@/components/custody/CustodyTracker";
 import { InitiateCustodyModal } from "@/components/custody/InitiateCustodyModal";
+import { DealAssistant } from "@/components/deal/DealAssistant";
+import { DealRiskBadge } from "@/components/deal/DealRiskBadge";
+import { AnomalyDetector } from "@/components/deal/AnomalyDetector";
+import { useDealEvents, type DealEventType } from "@/hooks/useDealEvents";
 
 interface DealFull {
   id: string;
@@ -192,6 +196,22 @@ export default function DealRoomPage() {
     fetchCustody();
   }, [fetchDeal, fetchWorkflow, fetchCustody]);
 
+  // SSE: real-time deal room updates
+  useDealEvents(params.id as string, (eventType: DealEventType, _data: Record<string, unknown>) => {
+    if (eventType === "new_message" || eventType === "status_changed" || eventType === "party_invited" || eventType === "document_uploaded") {
+      refreshAll();
+      if (eventType === "new_message") {
+        toast.info("New message in deal room");
+      } else if (eventType === "status_changed") {
+        toast.info("Deal status updated");
+      } else if (eventType === "party_invited") {
+        toast.info("New party invited");
+      }
+    }
+    if (eventType === "workflow_updated") fetchWorkflow();
+    if (eventType === "custody_updated") fetchCustody();
+  });
+
   // Derive user's workflow role from deal parties
   useEffect(() => {
     if (!deal || !session?.user?.id) return;
@@ -260,7 +280,10 @@ export default function DealRoomPage() {
             {deal.value.toLocaleString()}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <DealAssistant dealId={deal.id} />
+          <DealRiskBadge dealId={deal.id} />
+          <AnomalyDetector dealId={deal.id} />
           {isCreator && !deal.workflowPhase && (
             <EnableWorkflowButton dealId={deal.id} onEnable={refreshAll} />
           )}

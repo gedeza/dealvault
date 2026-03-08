@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { logTimelineEvent } from "@/services/timeline.service";
 import { sanitizeString } from "@/lib/sanitize";
+import { broadcastToDeal } from "@/lib/sse";
 
 const messageSchema = z.object({
   content: z.string().min(1).max(5000),
@@ -111,6 +112,17 @@ export async function POST(
       eventType: "message_sent",
       description: `Message sent in deal room`,
     });
+
+    // SSE: broadcast new message to deal room (only deal-visible messages)
+    if (data.visibility === "deal") {
+      broadcastToDeal(id, "new_message", {
+        id: message.id,
+        content: message.content,
+        sender: message.sender,
+        visibility: message.visibility,
+        createdAt: message.createdAt,
+      }, session.user.id);
+    }
 
     return NextResponse.json(message, { status: 201 });
   } catch (error) {

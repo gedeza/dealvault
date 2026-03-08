@@ -83,12 +83,23 @@
 | 11.4 | Branding brief for designers | DONE | `DOCS/BRANDING-BRIEF.md` — 13-section comprehensive guide |
 | 11.5 | Dashboard UI enhancement | DONE | Stat cards with colored icons, commodity themes, pipeline bars, activity timeline |
 | 11.6 | Mobile responsiveness | DONE | Fixed sidebar overlay, stacking headers, mobile card views, responsive sizing |
-| 11.7 | Real-time updates (WebSocket/SSE) | TODO | Live deal room updates without polling |
-| 11.8 | Deal settlement workflow | TODO | Full escrow fund release flow with multi-party approval |
-| 11.9 | Email notifications (transactional) | TODO | Invite, status change, document upload email triggers via Resend |
-| 11.10 | API documentation (OpenAPI/Swagger) | TODO | Complete `/api-docs` with full endpoint coverage |
-| 11.11 | PostgreSQL migration | TODO | Migrate production from SQLite to PostgreSQL |
-| 11.12 | Test coverage | TODO | Unit and integration tests for API routes and key workflows |
+| 11.7 | Real-time updates (SSE) | DONE | `src/lib/sse.ts` + `/api/deals/[id]/events` SSE endpoint; `useDealEvents` hook; wired into deal page with auto-refresh + toasts |
+| 11.8 | Deal settlement workflow | DONE | Full escrow workflow + custody services in `src/services/workflow.service.ts` + `custody.service.ts` |
+| 11.9 | Email notifications (transactional) | DONE | `sendDealEventEmail()` in email.service.ts; wired into status changes, party invites; fire-and-forget via Resend API |
+| 11.10 | API documentation (OpenAPI/Swagger) | DONE | Full OpenAPI 3.0.3 spec with SSE, AI, Workflow, Custody, Admin endpoints at `/api/docs` |
+| 11.11 | PostgreSQL migration | DONE | Already using PostgreSQL — Prisma provider is `postgresql` |
+| 11.12 | Test coverage | DONE | 46 tests (7 suites): SSE (6), email templates (5), magic-bytes (7), sanitize (6), rate-limit (4), storage (10), status-transitions (8) |
+
+---
+
+## Phase 12: AI Integration
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 12.1 | Deal Room Assistant | DONE | `src/services/ai.service.ts` + `/api/deals/[id]/assistant` + `DealAssistant` chat component; Claude Sonnet API |
+| 12.2 | Smart Notifications | DONE | `generateSmartNotification()` in ai.service.ts; Claude Haiku for contextual summaries |
+| 12.3 | Deal Risk Scoring | DONE | `assessDealRisk()` + `/api/deals/[id]/risk` + `DealRiskBadge` component; analyzes value, parties, docs |
+| 12.4 | Document Intelligence | DONE | `extractDocumentFields()` in ai.service.ts; auto-runs on document upload; logs extracted fields |
+| 12.5 | Anomaly Detection | DONE | `detectAnomalies()` + `/api/deals/[id]/anomalies` + `AnomalyDetector` component; weight variance, velocity, commission checks |
 
 ---
 
@@ -103,5 +114,6 @@
 | Phase 8 — Review & Fixes | 5 | 5 | 0 |
 | Phase 9 — Final Security & Scalability | 4 | 4 | 0 |
 | Phase 10 — Production & Polish | 10 | 10 | 0 |
-| Phase 11 — Branding, UX & Remaining | 12 | 6 | 6 |
-| **Total** | **77** | **70** | **7 (1 skipped, 6 TODO)** |
+| Phase 11 — Branding, UX & Remaining | 12 | 12 | 0 |
+| Phase 12 — AI Integration | 5 | 5 | 0 |
+| **Total** | **82** | **81** | **1 (skipped)** |

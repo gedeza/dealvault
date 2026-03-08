@@ -6,6 +6,8 @@ import { authOptions } from "@/lib/auth";
 import { logTimelineEvent } from "@/services/timeline.service";
 import { VALID_STATUS_TRANSITIONS, DEAL_STATUS_LABELS, type DealStatus } from "@/types";
 import { notifyDealParties } from "@/services/notification.service";
+import { broadcastToDeal } from "@/lib/sse";
+import { sendDealEventEmail } from "@/services/email.service";
 
 export async function GET(
   req: Request,
@@ -202,6 +204,25 @@ export async function PATCH(
         type: "status_changed",
         title: "Deal Status Updated",
         message: `"${deal.title}" is now ${DEAL_STATUS_LABELS[data.status] || data.status}`,
+      });
+
+      // SSE: broadcast status change to deal room
+      broadcastToDeal(id, "status_changed", {
+        dealId: id,
+        from: deal.status,
+        to: data.status,
+        updatedBy: session.user.name,
+      }, session.user.id);
+
+      // Email: notify all parties of status change
+      sendDealEventEmail({
+        dealId: id,
+        excludeUserId: session.user.id,
+        eventType: "status_changed",
+        dealTitle: deal.title,
+        dealNumber: deal.dealNumber,
+        actorName: session.user.name || "A deal member",
+        detail: `Status changed to ${DEAL_STATUS_LABELS[data.status] || data.status}`,
       });
     }
 

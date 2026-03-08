@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/db";
 
 export interface EmailPayload {
   to: string;
@@ -107,6 +108,117 @@ export function statusChangeEmail(params: {
       </div>
     `,
   };
+}
+
+export function documentUploadEmail(params: {
+  recipientName: string;
+  dealTitle: string;
+  dealNumber: string;
+  documentName: string;
+  uploaderName: string;
+  dealUrl: string;
+}): EmailPayload {
+  return {
+    to: "",
+    subject: `DealVault: New document uploaded to ${params.dealTitle}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #059669;">DealVault</h2>
+        <p>Hi ${params.recipientName},</p>
+        <p><strong>${params.uploaderName}</strong> uploaded a new document to deal <strong>${params.dealNumber}</strong>.</p>
+        <p><strong>Document:</strong> ${params.documentName}</p>
+        <p style="margin: 24px 0;">
+          <a href="${params.dealUrl}" style="background: #059669; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">
+            View Deal Room
+          </a>
+        </p>
+      </div>
+    `,
+  };
+}
+
+/**
+ * Send transactional emails to deal parties when events occur.
+ * Runs in the background (fire-and-forget) to not block API responses.
+ */
+export async function sendDealEventEmail(params: {
+  dealId: string;
+  excludeUserId?: string;
+  specificUserIds?: string[];
+  eventType: "status_changed" | "party_invited" | "document_uploaded" | "message_sent";
+  dealTitle: string;
+  dealNumber: string;
+  actorName: string;
+  detail: string;
+}): Promise<void> {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const dealUrl = `${baseUrl}/deals/${params.dealId}`;
+
+    let recipients: { id: string; name: string | null; email: string }[];
+
+    if (params.specificUserIds) {
+      recipients = await prisma.user.findMany({
+        where: { id: { in: params.specificUserIds } },
+        select: { id: true, name: true, email: true },
+      });
+    } else {
+      const parties = await prisma.dealParty.findMany({
+        where: { dealId: params.dealId },
+        include: { user: { select: { id: true, name: true, email: true } } },
+      });
+      const deal = await prisma.deal.findUnique({
+        where: { id: params.dealId },
+        include: { creator: { select: { id: true, name: true, email: true } } },
+      });
+
+      const userMap = new Map<string, { id: string; name: string | null; email: string }>();
+      for (const p of parties) {
+        userMap.set(p.user.id, p.user);
+      }
+      if (deal?.creator) {
+        userMap.set(deal.creator.id, deal.creator);
+      }
+      if (params.excludeUserId) {
+        userMap.delete(params.excludeUserId);
+      }
+      recipients = [...userMap.values()];
+    }
+
+    const subjectMap = {
+      status_changed: `DealVault: ${params.dealTitle} — ${params.detail}`,
+      party_invited: `DealVault: You've been invited to ${params.dealTitle}`,
+      document_uploaded: `DealVault: New document in ${params.dealTitle}`,
+      message_sent: `DealVault: New message in ${params.dealTitle}`,
+    };
+
+    for (const recipient of recipients) {
+      const email: EmailPayload = {
+        to: recipient.email,
+        subject: subjectMap[params.eventType],
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #059669;">DealVault</h2>
+            <p>Hi ${recipient.name || "there"},</p>
+            <p><strong>${params.actorName}</strong> — ${params.detail}</p>
+            <p><strong>Deal:</strong> ${params.dealNumber} — ${params.dealTitle}</p>
+            <p style="margin: 24px 0;">
+              <a href="${dealUrl}" style="background: #059669; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">
+                View Deal Room
+              </a>
+            </p>
+            <p style="color: #666; font-size: 12px;">You received this because you're a party to this deal.</p>
+          </div>
+        `,
+      };
+      // Fire-and-forget — don't await each email
+      sendEmail(email).catch((err) =>
+        logger.error("[Email] Failed to send deal event email", { error: String(err) })
+      );
+    }
+  } catch (error) {
+    logger.error("[Email] sendDealEventEmail failed", { error: String(error) });
+  }
 }
 
 export function passwordResetEmail(params: {
