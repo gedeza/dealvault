@@ -25,6 +25,7 @@ import {
   FileSearch,
 } from "lucide-react";
 import { PlatformMetrics } from "@/components/landing/PlatformMetrics";
+import { PricingSection } from "@/components/landing/PricingSection";
 
 export default function HomePage() {
   return (
@@ -46,7 +47,7 @@ export default function HomePage() {
               <Button variant="ghost">Sign In</Button>
             </Link>
             <Link href="/register">
-              <Button>Get Started Free</Button>
+              <Button>Start Free Trial</Button>
             </Link>
           </div>
         </div>
@@ -70,7 +71,7 @@ export default function HomePage() {
             <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
               <Link href="/register">
                 <Button size="lg" className="gap-2 w-full sm:w-auto">
-                  Get Started Free
+                  Start Free Trial
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -81,7 +82,7 @@ export default function HomePage() {
               </a>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              No credit card required. Full access to all features.
+              No credit card required. 7-day full access trial.
             </p>
           </div>
 
@@ -124,19 +125,19 @@ export default function HomePage() {
           </div>
           <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { icon: Lock, title: "Secure Deal Rooms", desc: "SHA-256 document hashing, party verification, and immutable audit trails for every transaction." },
+              { icon: Lock, title: "Secure Deal Rooms", desc: "Tamper-proof document hashing, party verification, and immutable audit trails for every transaction." },
               { icon: FileCheck, title: "Document Management", desc: "Upload SPA, NCNDA, IMFPA, BCL, POF with visibility controls — deal-wide, side-only, or private." },
               { icon: Users, title: "Multi-Party Coordination", desc: "Manage sellers, buyers, mandates, and intermediaries with side-based confidentiality controls." },
               { icon: Banknote, title: "Escrow Workflow", desc: "6-phase state machine: listing, documentation, buyer review, testing, fund blocking, and release." },
               { icon: Link2, title: "Chain of Custody", desc: "5-point tracking with GPS, photo & video evidence, seal verification, and dual-party confirmation at every checkpoint." },
               { icon: FlaskConical, title: "Testing & Verification", desc: "Record assay results, inspector details, and link certificates. Intermediary-managed, visible to all parties." },
-              { icon: MapPin, title: "GPS Evidence", desc: "Capture geotagged photos at each checkpoint. SHA-256 hashing ensures photos are tamper-proof." },
+              { icon: MapPin, title: "GPS Evidence", desc: "Capture geotagged photos at each checkpoint. Cryptographic hashing ensures photos are tamper-proof." },
               { icon: Globe, title: "Designed for Compliance", desc: "Audit trails, chain of custody records, and document management designed to support SADPMR, FICA/AML, and Kimberley Process requirements." },
               { icon: Shield, title: "Weight Variance Detection", desc: "Automatic alerts when commodity weight differs by more than 0.01% between checkpoints." },
-              { icon: Bot, title: "AI Deal Room Assistant", desc: "Ask questions about deal status, timeline, and next steps. Powered by Claude AI with full deal context." },
+              { icon: Bot, title: "AI Deal Room Assistant", desc: "Ask questions about deal status, timeline, and next steps. AI-powered insights with full deal context." },
               { icon: ShieldAlert, title: "AI Risk Scoring", desc: "Automated risk assessment analyzes deal value, party verification, document completeness, and flags concerns." },
               { icon: ScanSearch, title: "Anomaly Detection", desc: "AI scans for suspicious patterns — weight variances, unusual deal velocity, commission outliers, and new accounts." },
-              { icon: Radio, title: "Real-Time Updates", desc: "Live deal room updates via Server-Sent Events. See messages, status changes, and document uploads instantly." },
+              { icon: Radio, title: "Real-Time Updates", desc: "Live deal room updates — instant and always in sync. See messages, status changes, and document uploads the moment they happen." },
               { icon: Bell, title: "Email Notifications", desc: "Transactional emails for party invitations, status changes, and document uploads. Never miss a deal update." },
               { icon: FileSearch, title: "Document Intelligence", desc: "AI analyzes uploaded document metadata to suggest relevant deal fields and streamline processing." },
             ].map((feature) => (
@@ -162,7 +163,7 @@ export default function HomePage() {
               <div className="grid gap-0">
                 {[
                   { phase: "1", title: "Listing", desc: "Create a deal room, set commodity details and value, invite all parties (seller, buyer, intermediaries, mandates)." },
-                  { phase: "2", title: "Documentation", desc: "Upload SPA, NCNDA, IMFPA, BCL, POF, and all required documents. Each file is SHA-256 hashed for integrity." },
+                  { phase: "2", title: "Documentation", desc: "Upload SPA, NCNDA, IMFPA, BCL, POF, and all required documents. Each file is cryptographically hashed for integrity." },
                   { phase: "3", title: "Buyer Review", desc: "Buyer reviews all documentation and submits formal approval. Side-based messaging keeps communications confidential." },
                   { phase: "4", title: "Testing & Verification", desc: "Intermediary coordinates assay testing. Results recorded with inspector details and linked to verification certificates." },
                   { phase: "5", title: "Fund Blocking", desc: "Buyer blocks funds in escrow. Seller confirms receipt. Both parties verified before proceeding." },
@@ -202,7 +203,7 @@ export default function HomePage() {
                 <ul className="mt-6 space-y-3">
                   {[
                     "Tamper-evident seal ID tracking from origin to delivery",
-                    "GPS-tagged photo & video evidence at every checkpoint",
+                    "Geotagged photo & video evidence at every checkpoint",
                     "Weight variance auto-detection (>0.01% threshold)",
                     "Dual-party confirmation — both buyer and seller must verify",
                     "Fund release blocked until all checkpoints are verified",
@@ -251,116 +252,7 @@ export default function HomePage() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="border-y bg-muted/30">
-          <div className="container mx-auto px-4 py-20">
-            <div className="mx-auto max-w-3xl text-center">
-              <h2 className="text-2xl font-bold sm:text-3xl">Simple, Transparent Pricing</h2>
-              <p className="mt-4 text-muted-foreground">
-                Start free. Upgrade as your trading volume grows. Tiered plans coming soon.
-              </p>
-            </div>
-            <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-3">
-              {/* Free */}
-              <div className="rounded-xl border bg-background p-6">
-                <h3 className="text-lg font-bold">Free</h3>
-                <p className="text-xs text-muted-foreground mt-1">Individual brokers & small traders</p>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold">$0</span>
-                  <span className="text-muted-foreground">/mo</span>
-                </div>
-                <p className="text-xs text-muted-foreground">No credit card required</p>
-                <ul className="mt-6 space-y-2.5">
-                  {[
-                    "Deal rooms & status tracking",
-                    "Document management + SHA-256",
-                    "Multi-party coordination",
-                    "Deal-level messaging",
-                    "Email notifications",
-                    "Commission tracking",
-                    "Escrow workflow (6-phase)",
-                    "Chain of custody tracking",
-                  ].map((f) => (
-                    <li key={f} className="flex gap-2 text-sm">
-                      <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/register" className="block mt-6">
-                  <Button variant="outline" className="w-full">Get Started</Button>
-                </Link>
-              </div>
-
-              {/* Pro — Hero Tier */}
-              <div className="rounded-xl border-2 border-emerald-500 bg-background p-6 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-medium px-3 py-1 rounded-full">
-                  Most Popular
-                </div>
-                <h3 className="text-lg font-bold">Pro</h3>
-                <p className="text-xs text-muted-foreground mt-1">Established firms & trading houses</p>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold">Coming Soon</span>
-                </div>
-                <p className="text-xs text-muted-foreground">Priority access for early adopters</p>
-                <ul className="mt-6 space-y-2.5">
-                  {[
-                    "Everything in Free",
-                    "AI Deal Room Assistant",
-                    "AI Risk Scoring & Anomaly Detection",
-                    "Real-time deal room updates (SSE)",
-                    "Advanced reporting dashboards",
-                    "Multi-currency support (10 currencies)",
-                    "Audit log export (CSV & JSON)",
-                    "Full commission CRUD",
-                    "Priority support",
-                  ].map((f) => (
-                    <li key={f} className="flex gap-2 text-sm">
-                      <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/register" className="block mt-6">
-                  <Button className="w-full">Join Waitlist</Button>
-                </Link>
-              </div>
-
-              {/* Enterprise */}
-              <div className="rounded-xl border bg-background p-6">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold">Enterprise</h3>
-                  <Star className="h-4 w-4 text-amber-500" />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Institutions, banks & government</p>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold">Custom</span>
-                </div>
-                <p className="text-xs text-muted-foreground">Contact us for pricing</p>
-                <ul className="mt-6 space-y-2.5">
-                  {[
-                    "Everything in Pro",
-                    "White-label / custom branding",
-                    "SSO / SAML integration",
-                    "Unlimited API + webhooks",
-                    "Document Intelligence (AI OCR)",
-                    "Custom workflow phases",
-                    "On-premises deployment",
-                    "Dedicated account manager",
-                    "Custom SLAs (99.9%)",
-                  ].map((f) => (
-                    <li key={f} className="flex gap-2 text-sm">
-                      <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href="mailto:sales@dealvault.co.za" className="block mt-6">
-                  <Button variant="outline" className="w-full">Contact Sales</Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+        <PricingSection />
 
         {/* Commodities Section */}
         <section className="container mx-auto px-4 py-16">
@@ -397,13 +289,13 @@ export default function HomePage() {
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
               <Link href="/register">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
-                  Get Started Free
+                  Start Free Trial
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
             <p className="mt-4 text-xs text-emerald-200">
-              No credit card required. Full platform access.
+              No credit card required. 7-day full access trial.
             </p>
           </div>
         </section>
