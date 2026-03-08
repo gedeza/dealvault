@@ -12,6 +12,7 @@ import {
   User,
   ShieldCheck,
   Plus,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/deals", label: "Deal Rooms", icon: Handshake },
   { href: "/companies", label: "Companies", icon: Building2 },
+  { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/profile", label: "Profile", icon: User },
 ];
 
@@ -35,7 +37,7 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
         <Image src="/logo.png" alt="DealVault" width={28} height={28} />
         <span className="text-lg font-bold">DealVault</span>
       </div>
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4" data-tour="sidebar-nav">
         {[...navItems, ...(isAdmin ? [adminNavItem] : [])].map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -44,6 +46,7 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
             <Link
               key={item.href}
               href={item.href}
+              data-tour={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive
@@ -57,7 +60,7 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
           );
         })}
       </nav>
-      <div className="border-t p-4">
+      <div className="border-t p-4" data-tour="new-deal-btn">
         <Link href="/deals/new">
           <Button className="w-full gap-2">
             <Plus className="h-4 w-4" />

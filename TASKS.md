@@ -103,6 +103,18 @@
 
 ---
 
+## Phase 13: Advanced Features & Growth
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 13.1 | User onboarding flow | DONE | driver.js guided tour (7 steps); welcome dialog on first visit; localStorage persistence; emerald-themed dark mode styles |
+| 13.2 | Progressive Web App (PWA) | DONE | Service worker (network-first navigation, cache-first assets), web manifest, 8 icon sizes, offline fallback page, install prompt banner |
+| 13.3 | Webhook integrations | LATER | Slack & Teams notifications for deal events — deferred to future enhancement |
+| 13.4 | Multi-currency exchange rates | DONE | Live rates from frankfurter.app (1hr cache); 10 currencies (USD/EUR/GBP/ZAR/CHF/AED/CNY/JPY/AUD/CAD); CurrencySelector + CurrencyConverter components |
+| 13.5 | Advanced reporting dashboards | DONE | 5 interactive recharts charts — volume/value trend, commodity pie, status pipeline, cumulative commissions, deal size histogram; `/reports` page + `/api/reports` |
+| 13.6 | 2FA enforcement for high-value deals | DONE | TOTP verification required for deals >= $1M USD; 6-digit modal with paste support; signed JWT verification tokens (5min TTL); `X-2FA-Token` header validation; 2FA badge on deal detail |
+
+---
+
 ## Summary
 
 | Phase | Total | Done | Remaining |
@@ -116,4 +128,5 @@
 | Phase 10 — Production & Polish | 10 | 10 | 0 |
 | Phase 11 — Branding, UX & Remaining | 12 | 12 | 0 |
 | Phase 12 — AI Integration | 5 | 5 | 0 |
-| **Total** | **82** | **81** | **1 (skipped)** |
+| Phase 13 — Advanced Features & Growth | 6 | 5 | 1 (deferred) |
+| **Total** | **88** | **86** | **2 (1 skipped, 1 deferred)** |

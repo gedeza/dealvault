@@ -21,6 +21,10 @@ import {
 } from "@/components/ui/card";
 import { COMMODITIES, UNITS, type Commodity } from "@/types";
 import { toast } from "sonner";
+import { useTwoFactor } from "@/hooks/use-two-factor";
+import { TwoFactorModal } from "@/components/security/two-factor-modal";
+import { CurrencySelector } from "@/components/currency/currency-selector";
+import { ShieldCheck } from "lucide-react";
 
 const DEAL_TEMPLATES = [
   {
@@ -53,6 +57,8 @@ export default function NewDealPage() {
   const [commodity, setCommodity] = useState<Commodity>("gold");
   const [title, setTitle] = useState("");
   const [commissionPool, setCommissionPool] = useState("2");
+  const [currency, setCurrency] = useState("USD");
+  const { requireVerification, verify, isVerifying, modalProps } = useTwoFactor();
 
   function applyTemplate(template: typeof DEAL_TEMPLATES[0]) {
     setTitle(template.title);
@@ -61,42 +67,71 @@ export default function NewDealPage() {
     toast.info(`Template "${template.name}" applied`);
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    const formData = new FormData(e.currentTarget);
+  async function createDeal(formData: FormData, verificationToken?: string) {
     const data = {
       title: title || (formData.get("title") as string),
       commodity,
       quantity: parseFloat(formData.get("quantity") as string),
       unit: formData.get("unit") as string,
       value: parseFloat(formData.get("value") as string),
-      currency: formData.get("currency") as string,
+      currency,
       commissionPool:
         parseFloat(commissionPool || (formData.get("commissionPool") as string) || "2") / 100,
     };
 
-    try {
-      const res = await fetch("/api/deals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
 
-      if (!res.ok) {
-        const json = await res.json();
-        setError(json.error || "Failed to create deal");
-        setLoading(false);
-        return;
+    if (verificationToken) {
+      headers["X-2FA-Token"] = verificationToken;
+    }
+
+    const res = await fetch("/api/deals", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const json = await res.json();
+      throw new Error(json.error || "Failed to create deal");
+    }
+
+    return res.json();
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const value = parseFloat(formData.get("value") as string);
+
+    try {
+      let verificationToken: string | undefined;
+
+      // Check if 2FA verification is needed for high-value deals
+      if (requireVerification(value, currency)) {
+        try {
+          const token = await verify();
+          if (!token) {
+            setLoading(false);
+            return;
+          }
+          verificationToken = token;
+        } catch {
+          setLoading(false);
+          return;
+        }
       }
 
-      const deal = await res.json();
+      const deal = await createDeal(formData, verificationToken);
       toast.success("Deal room created");
       router.push(`/deals/${deal.id}`);
-    } catch {
-      setError("Something went wrong");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
     }
   }
@@ -132,7 +167,7 @@ export default function NewDealPage() {
             </div>
 
             {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+              <div className="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
                 {error}
               </div>
             )}
@@ -211,19 +246,12 @@ export default function NewDealPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
-                <Select name="currency" defaultValue="USD">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="ZAR">ZAR</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                    <SelectItem value="GBP">GBP</SelectItem>
-                  </SelectContent>
-                </Select>
+                <CurrencySelector value={currency} onValueChange={setCurrency} />
               </div>
             </div>
+
+            {/* High-value deal notice */}
+            <HighValueNotice />
 
             <div className="space-y-2">
               <Label htmlFor="commissionPool">Commission Pool (%)</Label>
@@ -244,12 +272,32 @@ export default function NewDealPage() {
               </p>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating Deal Room..." : "Create Deal Room"}
+            <Button type="submit" className="w-full" disabled={loading || isVerifying}>
+              {loading || isVerifying ? "Creating Deal Room..." : "Create Deal Room"}
             </Button>
           </CardContent>
         </form>
       </Card>
+
+      {/* 2FA Verification Modal */}
+      <TwoFactorModal {...modalProps} />
+    </div>
+  );
+}
+
+function HighValueNotice() {
+  return (
+    <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-800 dark:bg-emerald-950/20">
+      <div className="flex items-start gap-2">
+        <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+        <div className="text-xs text-emerald-800 dark:text-emerald-300">
+          <p className="font-medium">High-Value Deal Security</p>
+          <p className="mt-0.5 text-emerald-700 dark:text-emerald-400">
+            Deals valued at $1,000,000 USD or more require two-factor
+            authentication verification before creation.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

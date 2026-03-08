@@ -74,6 +74,8 @@ import { DealAssistant } from "@/components/deal/DealAssistant";
 import { DealRiskBadge } from "@/components/deal/DealRiskBadge";
 import { AnomalyDetector } from "@/components/deal/AnomalyDetector";
 import { useDealEvents, type DealEventType } from "@/hooks/useDealEvents";
+import { TwoFactorBadge } from "@/components/security/two-factor-badge";
+import { CurrencyConverter } from "@/components/currency/currency-converter";
 
 interface DealFull {
   id: string;
@@ -272,6 +274,11 @@ export default function DealRoomPage() {
             >
               {DEAL_STATUS_LABELS[deal.status]}
             </Badge>
+            <TwoFactorBadge
+              dealValue={deal.value}
+              currency={deal.currency}
+              verified={deal.status !== "draft"}
+            />
           </div>
           <p className="text-muted-foreground">
             {deal.dealNumber} &middot;{" "}
@@ -279,6 +286,7 @@ export default function DealRoomPage() {
             {deal.quantity} {deal.unit} &middot; {deal.currency}{" "}
             {deal.value.toLocaleString()}
           </p>
+          <CurrencyConverter amount={deal.value} currency={deal.currency} />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <DealAssistant dealId={deal.id} />

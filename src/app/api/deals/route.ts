@@ -5,10 +5,11 @@ import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { logTimelineEvent } from "@/services/timeline.service";
 import { sanitizeObject } from "@/lib/sanitize";
+import { requiresTwoFactor, verify2FAToken } from "@/lib/two-factor-gate";
 
 const createDealSchema = z.object({
   title: z.string().min(3),
-  commodity: z.enum(["gold", "diamonds", "platinum"]),
+  commodity: z.enum(["gold", "diamonds", "platinum", "tanzanite"]),
   quantity: z.number().positive(),
   unit: z.string().min(1),
   value: z.number().positive(),
@@ -100,6 +101,33 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const data = createDealSchema.parse(sanitizeObject(body));
+
+    // Enforce 2FA for high-value deals
+    if (requiresTwoFactor(data.value, data.currency)) {
+      const tfaToken = req.headers.get("X-2FA-Token");
+      if (!tfaToken) {
+        return NextResponse.json(
+          { error: "Two-factor authentication is required for high-value deals" },
+          { status: 403 }
+        );
+      }
+
+      const verification = await verify2FAToken(tfaToken);
+      if (!verification.valid) {
+        return NextResponse.json(
+          { error: "Invalid or expired 2FA verification token" },
+          { status: 403 }
+        );
+      }
+
+      // Ensure the token belongs to the authenticated user
+      if (verification.userId !== session.user.id) {
+        return NextResponse.json(
+          { error: "2FA token does not match authenticated user" },
+          { status: 403 }
+        );
+      }
+    }
 
     // Use transaction to prevent deal number race condition
     const deal = await prisma.$transaction(async (tx) => {
