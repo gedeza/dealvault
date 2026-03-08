@@ -17,6 +17,12 @@ import {
   Scale,
   Eye,
   Globe,
+  Bot,
+  ShieldAlert,
+  ScanSearch,
+  Bell,
+  Radio,
+  FileSearch,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -138,6 +144,12 @@ export default function HomePage() {
               { icon: MapPin, title: "GPS Evidence", desc: "Capture geotagged photos at each checkpoint. SHA-256 hashing ensures photos are tamper-proof." },
               { icon: Globe, title: "Compliance Ready", desc: "Built for SADPMR, FICA/AML, Kimberley Process, and LBMA chain of integrity requirements." },
               { icon: Shield, title: "Weight Variance Detection", desc: "Automatic alerts when commodity weight differs by more than 0.01% between checkpoints." },
+              { icon: Bot, title: "AI Deal Room Assistant", desc: "Ask questions about deal status, timeline, and next steps. Powered by Claude AI with full deal context." },
+              { icon: ShieldAlert, title: "AI Risk Scoring", desc: "Automated risk assessment analyzes deal value, party verification, document completeness, and flags concerns." },
+              { icon: ScanSearch, title: "Anomaly Detection", desc: "AI scans for suspicious patterns — weight variances, unusual deal velocity, commission outliers, and new accounts." },
+              { icon: Radio, title: "Real-Time Updates", desc: "Live deal room updates via Server-Sent Events. See messages, status changes, and document uploads instantly." },
+              { icon: Bell, title: "Email Notifications", desc: "Transactional emails for party invitations, status changes, and document uploads. Never miss a deal update." },
+              { icon: FileSearch, title: "Document Intelligence", desc: "AI automatically extracts key fields from uploaded contracts and certificates to speed up deal processing." },
             ].map((feature) => (
               <div key={feature.title} className="rounded-lg border p-6 hover:border-emerald-200 hover:shadow-sm transition-all dark:hover:border-emerald-800">
                 <feature.icon className="h-7 w-7 text-emerald-600 mb-3" />
@@ -276,6 +288,7 @@ export default function HomePage() {
                     "Deal rooms & status tracking",
                     "Document management + SHA-256",
                     "Deal-level messaging",
+                    "Email notifications",
                     "Basic commission tracking",
                   ].map((f) => (
                     <li key={f} className="flex gap-2 text-sm">
@@ -311,6 +324,7 @@ export default function HomePage() {
                     "Escrow workflow (6-phase)",
                     "Fund blocking & release",
                     "Verification management",
+                    "Real-time deal room updates",
                     "Full commission CRUD",
                     "Audit log export (CSV)",
                   ].map((f) => (
@@ -343,6 +357,8 @@ export default function HomePage() {
                     "Chain of custody tracking",
                     "GPS & photo checkpoints",
                     "Dual-party confirmation",
+                    "AI Deal Room Assistant",
+                    "AI Risk Scoring",
                     "API access (10K req/day)",
                     "Compliance reporting",
                     "Phone support + account manager",
@@ -377,6 +393,8 @@ export default function HomePage() {
                     "White-label / custom branding",
                     "SSO / SAML integration",
                     "Unlimited API + webhooks",
+                    "AI Anomaly Detection",
+                    "Document Intelligence (AI)",
                     "Custom workflow phases",
                     "On-premises deployment",
                     "Dedicated engineer",
