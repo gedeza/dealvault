@@ -440,41 +440,43 @@ model CustodyConfirmation {
 // ============================================================================
 
 model Subscription {
-  id                 String    @id @default(cuid())
-  tier               String    @default("prospect") // prospect, reef, sovereign, vault
-  status             String    @default("active") // active, past_due, cancelled, trialing
-  stripeCustomerId   String?   @unique
-  stripeSubscriptionId String? @unique
-  stripePriceId      String?
-  trialEndsAt        DateTime?
-  currentPeriodStart DateTime?
-  currentPeriodEnd   DateTime?
-  cancelledAt        DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  tier                  String    @default("prospect") // prospect, reef, sovereign, vault
+  status                String    @default("active") // active, past_due, cancelled, trialing
+  provider              String    @default("paystack") // paystack, flutterwave
+  providerCustomerId    String?   @unique // e.g. Paystack CUS_xxx
+  providerSubscriptionId String?  @unique // e.g. Paystack SUB_xxx
+  providerPlanCode      String?            // e.g. Paystack PLN_xxx
+  providerEmail         String?            // email registered with payment provider
+  trialEndsAt           DateTime?
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  cancelledAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  userId             String    @unique
-  user               User      @relation(fields: [userId], references: [id])
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id])
 
-  invoices           Invoice[]
+  invoices              Invoice[]
 
   @@index([userId])
-  @@index([stripeCustomerId])
+  @@index([providerCustomerId])
   @@index([status])
 }
 
 model Invoice {
-  id               String    @id @default(cuid())
-  stripeInvoiceId  String?   @unique
-  amount           Float
-  currency         String    @default("USD")
-  status           String    @default("pending") // pending, paid, failed, void
-  paidAt           DateTime?
-  invoiceUrl       String?
-  createdAt        DateTime  @default(now())
+  id                String    @id @default(cuid())
+  providerInvoiceId String?   @unique // e.g. Paystack invoice reference
+  amount            Float
+  currency          String    @default("ZAR")
+  status            String    @default("pending") // pending, paid, failed, void
+  paidAt            DateTime?
+  invoiceUrl        String?
+  createdAt         DateTime  @default(now())
 
-  subscriptionId   String
-  subscription     Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId    String
+  subscription      Subscription @relation(fields: [subscriptionId], references: [id])
 
   @@index([subscriptionId])
   @@index([status])

@@ -1,5 +1,5 @@
 /**
- * Billing Service — Stripe subscription management.
+ * Billing Service — Paystack subscription management.
  *
  * Tier definitions (mining-heritage naming from REVENUE-MODEL.md):
  *   prospect   — Entry tier: 5 deals, 3 users, 5 GB, up to $2M
@@ -7,17 +7,41 @@
  *   sovereign  — Premium: 75 deals, 30 users, 100 GB, chain of custody
  *   vault      — Enterprise: unlimited, custom, sales-led
  *
- * Environment: STRIPE_SECRET_KEY, STRIPE_REEF_PRICE_ID, STRIPE_SOVEREIGN_PRICE_ID, STRIPE_WEBHOOK_SECRET
+ * Environment: PAYSTACK_SECRET_KEY, PAYSTACK_REEF_PLAN_CODE, PAYSTACK_SOVEREIGN_PLAN_CODE, PAYSTACK_WEBHOOK_SECRET
  */
 
-import Stripe from "stripe";
+import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 
-function getStripe(): Stripe | null {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) return null;
-  return new Stripe(key, { apiVersion: "2026-02-25.clover" });
+const PAYSTACK_BASE = "https://api.paystack.co";
+
+function getPaystackKey(): string | null {
+  return process.env.PAYSTACK_SECRET_KEY || null;
+}
+
+async function paystackRequest<T = Record<string, unknown>>(
+  method: string,
+  path: string,
+  body?: Record<string, unknown>
+): Promise<T> {
+  const key = getPaystackKey();
+  if (!key) throw new Error("Paystack not configured");
+
+  const res = await fetch(`${PAYSTACK_BASE}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+
+  const data = await res.json();
+  if (!data.status) {
+    throw new Error(data.message || `Paystack API error: ${res.status}`);
+  }
+  return data.data as T;
 }
 
 export type SubscriptionTier = "prospect" | "reef" | "sovereign" | "vault";
@@ -110,32 +134,52 @@ export async function getUserLimits(userId: string): Promise<TierLimits> {
   return TIER_LIMITS[tier];
 }
 
+/**
+ * Initialize a Paystack transaction for subscription checkout.
+ * Paystack handles the hosted payment page — we get a URL to redirect the user to.
+ */
 export async function createCheckoutSession(
   userId: string,
-  userEmail: string
+  userEmail: string,
+  targetTier: SubscriptionTier = "reef"
 ): Promise<string | null> {
-  const stripe = getStripe();
-  if (!stripe) {
-    logger.warn("[Billing] Stripe not configured");
+  const key = getPaystackKey();
+  if (!key) {
+    logger.warn("[Billing] Paystack not configured");
     return null;
   }
 
-  const priceId = process.env.STRIPE_REEF_PRICE_ID || process.env.STRIPE_PRO_PRICE_ID;
-  if (!priceId) {
-    logger.warn("[Billing] STRIPE_REEF_PRICE_ID not set");
+  const planCode =
+    targetTier === "sovereign"
+      ? process.env.PAYSTACK_SOVEREIGN_PLAN_CODE
+      : process.env.PAYSTACK_REEF_PLAN_CODE;
+
+  if (!planCode) {
+    logger.warn(`[Billing] PAYSTACK_${targetTier.toUpperCase()}_PLAN_CODE not set`);
     return null;
   }
 
-  // Find or create Stripe customer
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+
+  // Find or create Paystack customer
   let sub = await prisma.subscription.findUnique({ where: { userId } });
-  let customerId = sub?.stripeCustomerId;
+  let customerCode = sub?.providerCustomerId;
 
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: userEmail,
-      metadata: { userId },
-    });
-    customerId = customer.id;
+  if (!customerCode) {
+    try {
+      const customer = await paystackRequest<{ customer_code: string }>(
+        "POST",
+        "/customer",
+        {
+          email: userEmail,
+          metadata: { userId },
+        }
+      );
+      customerCode = customer.customer_code;
+    } catch (err) {
+      logger.error("[Billing] Failed to create Paystack customer", { err });
+      return null;
+    }
 
     if (!sub) {
       sub = await prisma.subscription.create({
@@ -143,143 +187,248 @@ export async function createCheckoutSession(
           userId,
           tier: "prospect",
           status: "active",
-          stripeCustomerId: customerId,
+          provider: "paystack",
+          providerCustomerId: customerCode,
+          providerEmail: userEmail,
         },
       });
     } else {
       await prisma.subscription.update({
         where: { userId },
-        data: { stripeCustomerId: customerId },
+        data: {
+          providerCustomerId: customerCode,
+          provider: "paystack",
+          providerEmail: userEmail,
+        },
       });
     }
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  // Initialize transaction with plan
+  try {
+    const transaction = await paystackRequest<{ authorization_url: string; reference: string }>(
+      "POST",
+      "/transaction/initialize",
+      {
+        email: userEmail,
+        plan: planCode,
+        callback_url: `${baseUrl}/profile?billing=success`,
+        metadata: {
+          userId,
+          targetTier,
+          cancel_action: `${baseUrl}/profile?billing=cancelled`,
+        },
+        channels: ["card", "bank", "eft"],
+      }
+    );
 
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId,
-    mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${baseUrl}/profile?billing=success`,
-    cancel_url: `${baseUrl}/profile?billing=cancelled`,
-    subscription_data: {
-      trial_period_days: 7,
-      metadata: { userId },
-    },
-  });
-
-  return session.url;
+    return transaction.authorization_url;
+  } catch (err) {
+    logger.error("[Billing] Failed to initialize Paystack transaction", { err });
+    return null;
+  }
 }
 
+/**
+ * Get a Paystack subscription management link.
+ * Paystack provides a manage link for customers to update card details.
+ */
 export async function createPortalSession(userId: string): Promise<string | null> {
-  const stripe = getStripe();
-  if (!stripe) return null;
+  const key = getPaystackKey();
+  if (!key) return null;
 
   const sub = await prisma.subscription.findUnique({ where: { userId } });
-  if (!sub?.stripeCustomerId) return null;
+  if (!sub?.providerSubscriptionId) return null;
 
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-
-  const session = await stripe.billingPortal.sessions.create({
-    customer: sub.stripeCustomerId,
-    return_url: `${baseUrl}/profile`,
-  });
-
-  return session.url;
+  try {
+    const data = await paystackRequest<{ link: string }>(
+      "GET",
+      `/subscription/${sub.providerSubscriptionId}/manage/link`
+    );
+    return data.link;
+  } catch (err) {
+    logger.error("[Billing] Failed to get Paystack manage link", { err });
+    return null;
+  }
 }
 
-export async function handleStripeWebhook(
+/**
+ * Verify Paystack webhook signature using SHA-512 HMAC.
+ */
+export function verifyWebhookSignature(body: string, signature: string): boolean {
+  const secret = process.env.PAYSTACK_WEBHOOK_SECRET;
+  if (!secret) return false;
+
+  const hash = crypto
+    .createHmac("sha512", secret)
+    .update(body)
+    .digest("hex");
+
+  return hash === signature;
+}
+
+/**
+ * Handle Paystack webhook events.
+ *
+ * Key events:
+ * - subscription.create — new subscription activated
+ * - charge.success — successful payment (including subscription renewal)
+ * - subscription.not_renew — customer cancelled auto-renewal
+ * - subscription.disable — subscription deactivated
+ * - invoice.create — new invoice generated
+ * - invoice.payment_failed — payment attempt failed
+ */
+export async function handlePaystackWebhook(
   body: string,
   signature: string
 ): Promise<void> {
-  const stripe = getStripe();
-  if (!stripe) return;
+  if (!verifyWebhookSignature(body, signature)) {
+    throw new Error("Invalid webhook signature");
+  }
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) return;
+  const payload = JSON.parse(body);
+  const { event, data } = payload;
 
-  const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+  switch (event) {
+    case "subscription.create": {
+      const userId = data.metadata?.userId || data.customer?.metadata?.userId;
+      const planCode = data.plan?.plan_code;
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.subscription
-        ? (await stripe.subscriptions.retrieve(session.subscription as string)).metadata.userId
-        : null;
+      // Determine tier from plan code
+      const tier = getTierFromPlanCode(planCode);
 
       if (userId) {
         await prisma.subscription.upsert({
           where: { userId },
           create: {
             userId,
-            tier: "reef",
+            tier,
             status: "active",
-            stripeCustomerId: session.customer as string,
-            stripeSubscriptionId: session.subscription as string,
+            provider: "paystack",
+            providerCustomerId: data.customer?.customer_code,
+            providerSubscriptionId: data.subscription_code,
+            providerPlanCode: planCode,
+            currentPeriodStart: data.createdAt ? new Date(data.createdAt) : new Date(),
+            currentPeriodEnd: data.next_payment_date
+              ? new Date(data.next_payment_date)
+              : undefined,
           },
           update: {
-            tier: "reef",
+            tier,
             status: "active",
-            stripeSubscriptionId: session.subscription as string,
+            providerSubscriptionId: data.subscription_code,
+            providerPlanCode: planCode,
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: data.next_payment_date
+              ? new Date(data.next_payment_date)
+              : undefined,
           },
         });
-        logger.info("[Billing] Subscription activated", { userId, tier: "reef" });
+        logger.info("[Billing] Subscription activated", { userId, tier });
       }
       break;
     }
 
-    case "customer.subscription.updated": {
-      const subscription = event.data.object as Stripe.Subscription;
+    case "charge.success": {
+      // Handle successful charge — could be initial or renewal
+      const customerCode = data.customer?.customer_code;
+      if (!customerCode) break;
+
       const sub = await prisma.subscription.findUnique({
-        where: { stripeSubscriptionId: subscription.id },
+        where: { providerCustomerId: customerCode },
       });
 
       if (sub) {
-        const statusMap: Record<string, string> = {
-          active: "active",
-          trialing: "trialing",
-          past_due: "past_due",
-        };
-        await prisma.subscription.update({
-          where: { id: sub.id },
-          data: {
-            status: statusMap[subscription.status] || "cancelled",
-          },
+        // Record payment as invoice
+        const existingInvoice = await prisma.invoice.findUnique({
+          where: { providerInvoiceId: data.reference },
         });
+
+        if (!existingInvoice) {
+          await prisma.invoice.create({
+            data: {
+              subscriptionId: sub.id,
+              providerInvoiceId: data.reference,
+              amount: (data.amount || 0) / 100, // Paystack amounts are in kobo/cents
+              currency: (data.currency || "ZAR").toUpperCase(),
+              status: "paid",
+              paidAt: new Date(),
+            },
+          });
+        }
+
+        // Ensure subscription is active
+        if (sub.status !== "active") {
+          await prisma.subscription.update({
+            where: { id: sub.id },
+            data: { status: "active" },
+          });
+        }
       }
       break;
     }
 
-    case "customer.subscription.deleted": {
-      const subscription = event.data.object as Stripe.Subscription;
-      await prisma.subscription.updateMany({
-        where: { stripeSubscriptionId: subscription.id },
-        data: { status: "cancelled", tier: "prospect", cancelledAt: new Date() },
-      });
-      logger.info("[Billing] Subscription cancelled", { stripeSubId: subscription.id });
-      break;
-    }
-
-    case "invoice.paid": {
-      const invoice = event.data.object as Stripe.Invoice;
-      const sub = await prisma.subscription.findUnique({
-        where: { stripeCustomerId: invoice.customer as string },
-      });
-
-      if (sub) {
-        await prisma.invoice.create({
+    case "subscription.not_renew": {
+      // Customer cancelled but subscription still active until end of period
+      const subCode = data.subscription_code;
+      if (subCode) {
+        await prisma.subscription.updateMany({
+          where: { providerSubscriptionId: subCode },
           data: {
-            subscriptionId: sub.id,
-            stripeInvoiceId: invoice.id,
-            amount: (invoice.amount_paid || 0) / 100,
-            currency: invoice.currency?.toUpperCase() || "USD",
-            status: "paid",
-            paidAt: new Date(),
-            invoiceUrl: invoice.hosted_invoice_url || null,
+            // Keep active until period ends, mark cancellation intent
+            cancelledAt: new Date(),
           },
         });
+        logger.info("[Billing] Subscription set to not renew", { subCode });
       }
       break;
     }
+
+    case "subscription.disable": {
+      // Subscription fully deactivated
+      const subCode = data.subscription_code;
+      if (subCode) {
+        await prisma.subscription.updateMany({
+          where: { providerSubscriptionId: subCode },
+          data: {
+            status: "cancelled",
+            tier: "prospect",
+            cancelledAt: new Date(),
+          },
+        });
+        logger.info("[Billing] Subscription cancelled", { subCode });
+      }
+      break;
+    }
+
+    case "invoice.payment_failed": {
+      const customerCode = data.customer?.customer_code;
+      if (customerCode) {
+        await prisma.subscription.updateMany({
+          where: { providerCustomerId: customerCode },
+          data: { status: "past_due" },
+        });
+        logger.warn("[Billing] Payment failed", { customerCode });
+      }
+      break;
+    }
+
+    default:
+      logger.info("[Billing] Unhandled webhook event", { event });
   }
+}
+
+/**
+ * Map Paystack plan code to DealVault tier.
+ */
+function getTierFromPlanCode(planCode: string | undefined): SubscriptionTier {
+  if (!planCode) return "reef"; // default upgrade tier
+
+  const reefPlan = process.env.PAYSTACK_REEF_PLAN_CODE;
+  const sovereignPlan = process.env.PAYSTACK_SOVEREIGN_PLAN_CODE;
+
+  if (planCode === sovereignPlan) return "sovereign";
+  if (planCode === reefPlan) return "reef";
+
+  return "reef";
 }

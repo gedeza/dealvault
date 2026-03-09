@@ -16,14 +16,23 @@ export async function GET() {
   return NextResponse.json({ tier, limits });
 }
 
-// POST /api/billing — Create Stripe Checkout session for Pro upgrade
-export async function POST() {
+// POST /api/billing — Create Paystack checkout session for upgrade
+export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const url = await createCheckoutSession(session.user.id, session.user.email);
+  // Optional: allow specifying target tier in request body
+  let targetTier: "reef" | "sovereign" = "reef";
+  try {
+    const body = await req.json().catch(() => ({}));
+    if (body.tier === "sovereign") targetTier = "sovereign";
+  } catch {
+    // Default to reef
+  }
+
+  const url = await createCheckoutSession(session.user.id, session.user.email, targetTier);
   if (!url) {
     return NextResponse.json(
       { error: "Billing is not configured. Contact support." },

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createPortalSession } from "@/services/billing.service";
 
-// POST /api/billing/portal — Create Stripe Customer Portal session
+// POST /api/billing/portal — Get Paystack subscription management link
 export async function POST() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {

@@ -157,6 +157,53 @@ _Source: Feature coverage audit conducted 2026-03-08. See `docs/FEATURE-AUDIT.md
 
 ---
 
+## Phase 15: Payment Strategy — Stripe → Paystack Migration
+
+_Source: `DOCS/PAYMENT-STRATEGY-REPORT.md` — SA compliance research, processor comparison, architecture recommendations._
+
+### 15A: Replace Stripe with Paystack (Immediate)
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 15.1 | Payment strategy & compliance research | DONE | `DOCS/PAYMENT-STRATEGY-REPORT.md` — 60+ sources; processor comparison, fraud risks, regulatory compliance (FICA, POPIA, CPA, ECTA, VAT) |
+| 15.2 | Replace Stripe with Paystack in billing service | DONE | `billing.service.ts` fully rewritten — Paystack API (transaction/initialize, subscription manage link, HMAC-SHA512 webhook verification) |
+| 15.3 | Update API routes for Paystack | DONE | `/api/billing` (checkout), `/api/billing/portal` (manage link), `/api/billing/webhook` (Paystack events: subscription.create, charge.success, subscription.not_renew, subscription.disable, invoice.payment_failed) |
+| 15.4 | Database migration (Stripe → provider-agnostic fields) | DONE | Migration `20260309_replace_stripe_with_paystack` — replaced `stripe*` columns with `provider*` (providerCustomerId, providerSubscriptionId, providerPlanCode, providerEmail); default currency ZAR; default provider paystack |
+| 15.5 | Prisma schema + client regeneration | DONE | Schema updated, migration applied, `npx prisma generate` successful, full build verified |
+
+### 15B: Payment Abstraction Layer (Before Second Provider)
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 15.6 | Extract Paystack into `providers/paystack.provider.ts` | TODO | Create unified `PaymentProvider` interface |
+| 15.7 | Webhook normalization layer | TODO | Normalize provider events to internal events (e.g. `charge.success` → `PAYMENT_COMPLETED`) |
+| 15.8 | Idempotency handling | TODO | Store processed webhook IDs, handle duplicates (7-30 day TTL) |
+
+### 15C: Compliance Infrastructure
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 15.9 | KYC at onboarding (tiered) | TODO | Basic for low-risk, Enhanced Due Diligence for mining/commodities clients (FICA mandatory) |
+| 15.10 | Sanctions screening | TODO | Automated OFAC SDN, UN, EU list checks at onboarding |
+| 15.11 | CPA-compliant subscription management | TODO | Renewal reminders, 7-day cooling-off (ECTA), self-service cancellation, 15-day refund window |
+| 15.12 | VAT calculation & display | TODO | 15.5% domestic (16% from April 2026); zero-rate exports; display inclusive pricing |
+
+### 15D: Continental Expansion
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 15.13 | Flutterwave as secondary provider | TODO | `providers/flutterwave.provider.ts` — covers 30+ African countries |
+| 15.14 | Mobile money payments | TODO | M-Pesa, MTN MoMo, Airtel Money via Flutterwave |
+| 15.15 | Provider router (country-based selection) | TODO | Auto-select Paystack vs Flutterwave based on customer country/currency/payment method |
+| 15.16 | Multi-currency pricing | TODO | USD + ZAR + key local currencies (NGN, KES, GHS) |
+
+### 15E: Enterprise Payment Features
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 15.17 | Invoice-based billing with PO support | TODO | Purchase order numbers on invoices for mining enterprise clients |
+| 15.18 | EFT/DebiCheck integration | TODO | Dominant B2B payment method in SA |
+| 15.19 | Annual billing with bank transfer | TODO | Reduces chargeback risk; require bank transfer for plans above R2,500+/month |
+| 15.20 | Net 30/60 payment terms | TODO | Enterprise tier — configurable payment terms |
+| 15.21 | PAPSS integration | TODO | Pan-African Payment & Settlement System — monitor for merchant APIs |
+
+---
+
 ## Summary
 
 | Phase | Total | Done | Remaining |
@@ -172,4 +219,9 @@ _Source: Feature coverage audit conducted 2026-03-08. See `docs/FEATURE-AUDIT.md
 | Phase 12 — AI Integration | 5 | 5 | 0 |
 | Phase 13 — Advanced Features & Growth | 6 | 5 | 0 (webhook moved to 14) |
 | Phase 14 — Audit Remediation & Enterprise | 16 | 16 | 0 |
-| **Total** | **104** | **102** | **2 (1 skipped, 1 deferred)** |
+| Phase 15A — Paystack Migration | 5 | 5 | 0 |
+| Phase 15B — Payment Abstraction Layer | 3 | 0 | 3 |
+| Phase 15C — Compliance Infrastructure | 4 | 0 | 4 |
+| Phase 15D — Continental Expansion | 4 | 0 | 4 |
+| Phase 15E — Enterprise Payment Features | 5 | 0 | 5 |
+| **Total** | **125** | **107** | **18 (1 skipped, 1 deferred, 16 future)** |

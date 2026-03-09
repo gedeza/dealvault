@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
-import { handleStripeWebhook } from "@/services/billing.service";
+import { handlePaystackWebhook } from "@/services/billing.service";
 
-// POST /api/billing/webhook — Stripe webhook endpoint
+// POST /api/billing/webhook — Paystack webhook endpoint
 export async function POST(req: Request) {
-  const signature = req.headers.get("stripe-signature");
+  const signature = req.headers.get("x-paystack-signature");
   if (!signature) {
     return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
   try {
     const body = await req.text();
-    await handleStripeWebhook(body, signature);
+    await handlePaystackWebhook(body, signature);
     return NextResponse.json({ received: true });
   } catch (err) {
     return NextResponse.json(
