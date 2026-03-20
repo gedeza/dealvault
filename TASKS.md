@@ -204,6 +204,81 @@ _Source: `DOCS/PAYMENT-STRATEGY-REPORT.md` — SA compliance research, processor
 
 ---
 
+## Phase 16: Revenue-Critical Gaps
+
+_Source: Implementation audit conducted 2026-03-20. Gaps identified between documentation (REVENUE-MODEL.md, PROJECT-PROPOSAL.md) and actual codebase._
+
+### 16A: Transaction Fee Engine (Critical — Revenue Feature)
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 16.1 | Transaction fee calculation service | TODO | Implement degressive fee schedule from REVENUE-MODEL.md: 1.00% (≤$1M), 0.75% ($1-3M), 0.60% ($3-5M), 0.45% ($5-10M), 0.30% ($10-25M), 0.20% ($25-50M), 0.15% ($50M+); `src/services/transaction-fee.service.ts` |
+| 16.2 | Tier-based fee caps | TODO | Per-tier min/max caps: Prospect ($250-$3K), Reef ($200-$5K), Sovereign ($150-$7.5K at -10%), Vault (custom from -25%); enforce at settlement |
+| 16.3 | Fee ledger model + migration | TODO | `TransactionFee` Prisma model — deal reference, calculated fee, cap applied, tier at time of settlement, payment status |
+| 16.4 | Wire fee into deal settlement flow | TODO | `/api/deals/[id]/settle` must calculate and record transaction fee; display fee breakdown before settlement confirmation |
+| 16.5 | Fee dashboard for admin | TODO | Admin view of transaction fee revenue — total collected, by tier, by commodity, monthly trend |
+
+### 16B: Trial & Onboarding Billing (Critical — Conversion Feature)
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 16.6 | Free trial provisioning on registration | TODO | Auto-create 7-day Reef trial subscription on user registration; set `trialEndsAt`; no payment method required |
+| 16.7 | Trial expiration handling | TODO | Cron/scheduled job to downgrade expired trials to Prospect tier; send reminder emails at 3 days, 1 day, and expiry |
+| 16.8 | Trial-to-paid conversion flow | TODO | Prompt user to upgrade before trial ends; show countdown banner; seamless transition to Paystack checkout |
+
+---
+
+## Phase 17: Workflow & Escrow Gaps
+
+_Source: Implementation audit — features documented in ESCROW-WORKFLOW-DESIGN.md with partial or missing implementation._
+
+### 17A: Phase Timeout Enforcement
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 17.1 | Phase timeout cron scheduler | TODO | `phaseDeadline` field exists on DealWorkflow but is never enforced; implement cron job (node-cron or Vercel cron) to check deadlines |
+| 17.2 | Timeout escalation actions | TODO | On deadline breach: notify all parties, optionally auto-advance or auto-dispute based on configuration |
+| 17.3 | Deadline management UI | TODO | Allow deal creator/intermediary to set/extend phase deadlines from PhaseActionPanel |
+
+### 17B: Dispute Resolution
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 17.4 | Dispute resolution UI | TODO | Dedicated dispute interface for intermediary role — view evidence from both sides, select resolution (advance to phase, cancel, refund) |
+| 17.5 | Dispute evidence submission | TODO | Both parties can submit text + document evidence; intermediary reviews and makes binding decision |
+| 17.6 | Dispute resolution notifications | TODO | Email + in-app notifications at dispute creation, evidence submission, and resolution |
+
+---
+
+## Phase 18: Export & Document Generation
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 18.1 | PDF generation engine | TODO | Add PDF generation library (e.g., `@react-pdf/renderer` or `puppeteer`); core PDF template system |
+| 18.2 | Deal summary PDF | TODO | One-page deal overview: parties, commodity, value, status, key dates; downloadable from deal detail |
+| 18.3 | Audit log PDF export | TODO | Formatted PDF of full deal timeline; Sovereign tier feature (currently only CSV/JSON) |
+| 18.4 | Escrow release instructions PDF | TODO | Generated document with fund release details, custody confirmation summary, signatures required |
+| 18.5 | Custody chain PDF report | TODO | Full chain of custody report with checkpoint photos, GPS data, weight records, confirmation timestamps |
+
+---
+
+## Phase 19: Billing Enhancements
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 19.1 | Annual billing plan codes | TODO | Create annual Paystack plans for Reef & Sovereign (17% discount); wire `PAYSTACK_REEF_ANNUAL_PLAN_CODE` and `PAYSTACK_SOVEREIGN_PLAN_CODE_ANNUAL` env vars |
+| 19.2 | Billing period toggle in checkout | TODO | Allow user to select monthly vs annual before redirecting to Paystack; landing page toggle already exists |
+| 19.3 | Subscription usage tracking | TODO | Track actual usage vs limits (active deals count, storage used, API calls today); display on profile SubscriptionCard |
+
+---
+
+## Phase 20: Architecture & Quality
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 20.1 | Centralized auth middleware.ts | TODO | Replace per-route `getServerSession()` checks with Next.js middleware for protected routes; reduce boilerplate across 48 API routes |
+| 20.2 | End-to-end escrow + custody test suite | TODO | Playwright tests covering full 6-phase workflow: listing → documentation → buyer review → testing → fund blocking → fund release; dual-party custody confirmation |
+| 20.3 | Webhook delivery reliability audit | TODO | Verify retry logic, backoff, dead letter queue behavior in `webhook.service.ts`; add monitoring/alerting for failed deliveries |
+| 20.4 | API rate limiting per tier | TODO | Differentiate rate limits by subscription tier — Prospect (100 req/hr), Reef (500), Sovereign (2K), Vault (10K); currently flat rate on auth routes only |
+
+---
+
 ## Summary
 
 | Phase | Total | Done | Remaining |
@@ -224,4 +299,11 @@ _Source: `DOCS/PAYMENT-STRATEGY-REPORT.md` — SA compliance research, processor
 | Phase 15C — Compliance Infrastructure | 4 | 0 | 4 |
 | Phase 15D — Continental Expansion | 4 | 0 | 4 |
 | Phase 15E — Enterprise Payment Features | 5 | 0 | 5 |
-| **Total** | **125** | **107** | **18 (1 skipped, 1 deferred, 16 future)** |
+| Phase 16A — Transaction Fee Engine | 5 | 0 | 5 |
+| Phase 16B — Trial & Onboarding Billing | 3 | 0 | 3 |
+| Phase 17A — Phase Timeout Enforcement | 3 | 0 | 3 |
+| Phase 17B — Dispute Resolution | 3 | 0 | 3 |
+| Phase 18 — Export & Document Generation | 5 | 0 | 5 |
+| Phase 19 — Billing Enhancements | 3 | 0 | 3 |
+| Phase 20 — Architecture & Quality | 4 | 0 | 4 |
+| **Total** | **151** | **107** | **44 (1 skipped, 1 deferred, 42 future)** |
