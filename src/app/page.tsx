@@ -23,6 +23,11 @@ import {
   Bell,
   Radio,
   FileSearch,
+  CircleDot,
+  TrendingUp,
+  Gem,
+  FileText,
+  MessageSquare,
 } from "lucide-react";
 import { PlatformMetrics } from "@/components/landing/PlatformMetrics";
 import { PricingSection } from "@/components/landing/PricingSection";
@@ -55,39 +60,214 @@ export default function HomePage() {
 
       <main>
         {/* Hero Section */}
-        <section className="container mx-auto px-4 py-20 md:py-28">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">
-              <Image src="/logo.png" alt="" width={16} height={16} />
-              Secure commodity deal rooms for Southern Africa
-            </div>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-              Secure Deal Rooms for
-              <span className="text-emerald-600"> High-Value</span> Commodity Trades
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              The only platform that combines deal management, escrow workflow, and chain of custody tracking for gold, diamond, platinum, and tanzanite transactions.
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/register">
-                <Button size="lg" className="gap-2 w-full sm:w-auto">
-                  Start Free Trial
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <a href="#how-it-works">
-                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto">
-                  See How It Works
-                </Button>
-              </a>
-            </div>
-            <p className="mt-4 text-xs text-muted-foreground">
-              No credit card required. 7-day full access trial.
-            </p>
+        <section className="relative overflow-hidden border-b bg-gradient-to-b from-emerald-50/50 via-background to-background dark:from-emerald-950/20">
+          {/* Background decorative elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-emerald-100/40 blur-3xl dark:bg-emerald-900/20" />
+            <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-emerald-100/30 blur-3xl dark:bg-emerald-900/10" />
           </div>
 
-          {/* Dynamic trust metrics */}
-          <PlatformMetrics />
+          <div className="container relative mx-auto px-4 pt-16 pb-8 md:pt-24 md:pb-12">
+            <div className="mx-auto max-w-4xl text-center">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">
+                <Image src="/logo.png" alt="" width={16} height={16} />
+                Secure commodity deal rooms for Southern Africa
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+                Secure Deal Rooms for
+                <span className="text-emerald-600"> High-Value</span> Commodity Trades
+              </h1>
+              <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
+                The only platform that combines deal management, escrow workflow, and chain of custody tracking for gold, diamond, platinum, and tanzanite transactions.
+              </p>
+              <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+                <Link href="/register">
+                  <Button size="lg" className="gap-2 w-full sm:w-auto text-base px-8 py-6">
+                    Start Free Trial
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <a href="#how-it-works">
+                  <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto text-base px-8 py-6">
+                    See How It Works
+                  </Button>
+                </a>
+              </div>
+              <p className="mt-4 text-xs text-muted-foreground">
+                No credit card required. 7-day full access trial.
+              </p>
+            </div>
+
+            {/* App Preview Mock — Deal Room Interface */}
+            <div className="mx-auto mt-16 max-w-5xl">
+              <div className="rounded-xl border bg-background shadow-2xl shadow-emerald-900/10 overflow-hidden">
+                {/* Mock browser chrome */}
+                <div className="flex items-center gap-2 border-b bg-muted/50 px-4 py-2.5">
+                  <div className="flex gap-1.5">
+                    <div className="h-3 w-3 rounded-full bg-red-400" />
+                    <div className="h-3 w-3 rounded-full bg-yellow-400" />
+                    <div className="h-3 w-3 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="ml-4 flex-1 rounded-md bg-background border px-3 py-1 text-xs text-muted-foreground">
+                    dealvault.isutech.co.za/deals/DV-2026-0001
+                  </div>
+                </div>
+
+                {/* Mock app content */}
+                <div className="flex min-h-[420px] md:min-h-[480px]">
+                  {/* Sidebar */}
+                  <div className="hidden md:flex w-56 flex-col border-r bg-muted/30 p-4">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Image src="/logo.png" alt="" width={20} height={20} />
+                      <span className="font-bold text-sm">DealVault</span>
+                    </div>
+                    <nav className="space-y-1 text-sm">
+                      {[
+                        { icon: TrendingUp, label: "Dashboard", active: false },
+                        { icon: Gem, label: "Deal Rooms", active: true },
+                        { icon: Users, label: "Companies", active: false },
+                        { icon: FileText, label: "Reports", active: false },
+                      ].map((item) => (
+                        <div key={item.label} className={`flex items-center gap-2.5 rounded-md px-3 py-2 ${item.active ? "bg-emerald-100 text-emerald-800 font-medium dark:bg-emerald-900/40 dark:text-emerald-300" : "text-muted-foreground"}`}>
+                          <item.icon className="h-4 w-4" />
+                          {item.label}
+                        </div>
+                      ))}
+                    </nav>
+                  </div>
+
+                  {/* Main content */}
+                  <div className="flex-1 p-4 md:p-6 overflow-hidden">
+                    {/* Deal header */}
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-mono text-muted-foreground">DV-2026-0001</span>
+                          <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Fund Blocking</span>
+                        </div>
+                        <h3 className="text-base md:text-lg font-bold">Gold Bullion Purchase — 25kg AU 999.9</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">Seller: Rand Refinery Ltd &middot; Buyer: Sarah Ndlovu</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-lg md:text-xl font-bold text-emerald-600">$1,750,000</div>
+                        <div className="text-xs text-muted-foreground">Commission: 2.5%</div>
+                      </div>
+                    </div>
+
+                    {/* Workflow stepper */}
+                    <div className="mb-6">
+                      <div className="flex items-center gap-1 overflow-x-auto pb-2">
+                        {[
+                          { label: "Listing", done: true },
+                          { label: "Docs", done: true },
+                          { label: "Review", done: true },
+                          { label: "Testing", done: true },
+                          { label: "Fund Block", active: true },
+                          { label: "Release", done: false },
+                        ].map((step, i) => (
+                          <div key={step.label} className="flex items-center">
+                            <div className="flex flex-col items-center">
+                              <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold shrink-0 ${
+                                step.done ? "bg-emerald-500 text-white" :
+                                step.active ? "bg-blue-500 text-white ring-4 ring-blue-100 dark:ring-blue-900/40" :
+                                "bg-muted text-muted-foreground"
+                              }`}>
+                                {step.done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                              </div>
+                              <span className={`text-[10px] mt-1 whitespace-nowrap ${step.active ? "font-semibold text-blue-600 dark:text-blue-400" : "text-muted-foreground"}`}>{step.label}</span>
+                            </div>
+                            {i < 5 && <div className={`h-px w-4 md:w-8 mx-0.5 mt-[-14px] ${step.done ? "bg-emerald-400" : "bg-muted"}`} />}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Content grid */}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {/* Custody tracker */}
+                      <div className="rounded-lg border p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Link2 className="h-4 w-4 text-emerald-600" />
+                          <span className="text-sm font-semibold">Chain of Custody</span>
+                          <span className="ml-auto text-xs text-emerald-600 font-medium">4/5 verified</span>
+                        </div>
+                        <div className="space-y-2.5">
+                          {[
+                            { label: "Sealed at Refinery", verified: true },
+                            { label: "Vault Storage", verified: true },
+                            { label: "Logistics Transfer", verified: true },
+                            { label: "Arrived at Delivery", verified: true },
+                            { label: "Received by Buyer", pending: true },
+                          ].map((cp) => (
+                            <div key={cp.label} className="flex items-center gap-2.5">
+                              <div className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${
+                                cp.verified ? "bg-emerald-500" : "bg-muted"
+                              }`}>
+                                {cp.verified ? <Check className="h-3 w-3 text-white" /> : <CircleDot className="h-3 w-3 text-muted-foreground" />}
+                              </div>
+                              <span className={`text-xs ${cp.verified ? "" : "text-muted-foreground"}`}>{cp.label}</span>
+                              {cp.verified && <span className="ml-auto text-[10px] text-emerald-600">Both confirmed</span>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Deal activity + escrow */}
+                      <div className="space-y-4">
+                        {/* Escrow status */}
+                        <div className="rounded-lg border p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Banknote className="h-4 w-4 text-emerald-600" />
+                            <span className="text-sm font-semibold">Escrow Status</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                              <div className="h-full w-2/3 rounded-full bg-emerald-500" />
+                            </div>
+                            <span className="text-xs font-medium text-emerald-600">Blocked</span>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-2">Funds blocked by buyer. Awaiting delivery confirmation for release.</p>
+                        </div>
+
+                        {/* Recent messages */}
+                        <div className="rounded-lg border p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <MessageSquare className="h-4 w-4 text-emerald-600" />
+                            <span className="text-sm font-semibold">Messages</span>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
+                                <span className="text-[9px] text-white font-bold">SN</span>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-muted-foreground">Sarah Ndlovu &middot; 2 min ago</p>
+                                <p className="text-xs">Delivery team en route. ETA 14:30 SAST.</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="h-5 w-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                                <span className="text-[9px] text-white font-bold">JM</span>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-muted-foreground">James van der Merwe &middot; 15 min ago</p>
+                                <p className="text-xs">Confirmed — security escort arranged.</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Subtle glow under the mock */}
+              <div className="mx-auto mt-[-2px] h-8 w-[80%] rounded-b-3xl bg-emerald-500/5 blur-2xl" />
+            </div>
+
+            {/* Dynamic trust metrics */}
+            <PlatformMetrics />
+          </div>
         </section>
 
         {/* Problem Statement */}
